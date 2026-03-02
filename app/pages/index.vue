@@ -91,7 +91,7 @@
             :key="p"
             type="button"
             :class="[
-              'flex h-9 min-w-[2.25rem] items-center justify-center rounded px-2 text-sm font-medium transition',
+              'flex h-9 min-w-9 items-center justify-center rounded px-2 text-sm font-medium transition',
               p === paginaAtual
                 ? 'bg-zinc-700 text-white'
                 : 'text-zinc-400 hover:bg-zinc-800 hover:text-white'
