@@ -6,6 +6,7 @@
           {{ title }}
         </h2>
         <NuxtLink
+          v-if="verTudoHref"
           :to="verTudoHref"
           class="text-sm font-medium text-primary transition hover:text-primary/80"
         >
@@ -34,10 +35,11 @@
           class="flex w-full gap-5 overflow-x-auto pb-4 scroll-smooth pl-1 pr-1"
           style="scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scrollbar-width: none;"
         >
-          <div
+          <NuxtLink
             v-for="(item, i) in items"
             :key="item.id ?? i"
-            class="relative w-[220px] shrink-0 rounded-xl bg-zinc-900/80 transition hover:bg-zinc-800/80"
+            :to="item.id ? `/jogo/${item.id}` : '#'"
+            class="relative block w-[220px] shrink-0 rounded-xl bg-zinc-900/80 transition hover:bg-zinc-800/80"
             style="scroll-snap-align: start;"
           >
             <div class="aspect-square w-full overflow-hidden rounded-t-xl bg-zinc-800">
@@ -74,7 +76,7 @@
                 </div>
               </div>
             </div>
-          </div>
+          </NuxtLink>
         </div>
       </div>
     </div>

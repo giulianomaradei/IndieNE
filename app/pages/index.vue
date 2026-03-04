@@ -6,19 +6,18 @@
     <!-- Destaques -->
     <CarouselDestaque
       title="Destaques"
-      ver-tudo-href="/destaques"
       :items="jogosDestaque"
     />
 
     <!-- Por categoria: Sobrevivência, RPG -->
     <CarouselDestaque
       title="Sobrevivência"
-      ver-tudo-href="/categoria/sobrevivencia"
+      ver-tudo-href="/explorar?genero=Survival"
       :items="jogosSobrevivencia"
     />
     <CarouselDestaque
       title="RPG"
-      ver-tudo-href="/categoria/rpg"
+      ver-tudo-href="/explorar?genero=RPG"
       :items="jogosRpg"
     />
 
@@ -116,77 +115,13 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'default' })
 
-const destaqueHero = [
-  {
-    id: '1',
-    title: 'God Breakers',
-    subtitle: 'Em destaque',
-    tags: ['Roguelike', 'Ação', 'Multijogador', 'Cooperativo'],
-    developer: 'To The Sky',
-    rating: '87'
-  },
-  {
-    id: '2',
-    title: 'Jogo em destaque 2',
-    subtitle: 'Explorando novos mundos.',
-    tags: ['Indie', 'Aventura'],
-    developer: 'Estúdio XYZ',
-    rating: '92'
-  },
-  {
-    id: '3',
-    title: 'Jogo em destaque 3',
-    subtitle: 'Em breve na comunidade.',
-    tags: ['RPG', 'Estratégia'],
-    developer: 'Dev Team',
-    rating: '78'
-  }
-]
-
-const jogosDestaque = [
-  { id: '1', title: 'The Binding of Isaac: Rebirth', subtitle: 'Roguelike', rating: '73' },
-  { id: '2', title: 'Absolum', subtitle: 'Pomadaria', rating: '91' },
-  { id: '3', title: 'Back Seat Drivers', subtitle: 'Corrida', rating: '88' },
-  { id: '4', title: 'Space Evolver', subtitle: 'Estratégia', rating: '63' },
-  { id: '5', title: 'Hollow Knight', subtitle: 'Metroidvania', rating: '95' },
-  { id: '6', title: 'Celeste', subtitle: 'Plataforma', rating: '92' },
-  { id: '7', title: 'Dead Cells', subtitle: 'Roguelike', rating: '89' },
-  { id: '8', title: 'Hades', subtitle: 'Roguelike', rating: '93' },
-  { id: '9', title: 'Stardew Valley', subtitle: 'Simulação', rating: '97' },
-  { id: '10', title: 'Undertale', subtitle: 'RPG', rating: '94' }
-]
-
-const jogosSobrevivencia = [
-  { id: '1', title: 'DELIVERANCE', subtitle: 'Survival', rating: '85' },
-  { id: '2', title: 'Flatlands', subtitle: 'Survival', rating: '72' },
-  { id: '3', title: 'MONSTER SURVIVAL', subtitle: 'Survival', rating: '90' },
-  { id: '4', title: 'THE GIANT OF GREEN PEAKS', subtitle: 'Survival', rating: '68' },
-  { id: '5', title: 'The Forest', subtitle: 'Survival', rating: '86' },
-  { id: '6', title: 'Valheim', subtitle: 'Survival', rating: '91' },
-  { id: '7', title: 'Don\'t Starve', subtitle: 'Survival', rating: '88' },
-  { id: '8', title: 'Subnautica', subtitle: 'Survival', rating: '89' },
-  { id: '9', title: 'Raft', subtitle: 'Survival', rating: '79' },
-  { id: '10', title: 'Grounded', subtitle: 'Survival', rating: '84' }
-]
-
-const jogosRpg = [
-  { id: '1', title: 'SONGS OF SILENCE', subtitle: 'RPG', rating: '88' },
-  { id: '2', title: 'AMERTA', subtitle: 'RPG', rating: '75' },
-  { id: '3', title: 'COSMIC COOP', subtitle: 'RPG', rating: '82' },
-  { id: '4', title: 'CASSETTE BEASTS', subtitle: 'RPG', rating: '91' },
-  { id: '5', title: 'Chained Echoes', subtitle: 'RPG', rating: '90' },
-  { id: '6', title: 'Sea of Stars', subtitle: 'RPG', rating: '87' },
-  { id: '7', title: 'Eastward', subtitle: 'RPG', rating: '83' },
-  { id: '8', title: 'CrossCode', subtitle: 'RPG', rating: '86' },
-  { id: '9', title: 'Octopath Traveler', subtitle: 'RPG', rating: '84' },
-  { id: '10', title: 'Triangle Strategy', subtitle: 'RPG', rating: '85' }
-]
+const { destaqueHero, jogosDestaque, jogosSobrevivencia, jogosRpg } = useJogos()
 
 const ultimasPostagens = [
-  { id: '1', titulo: 'Abrigo animal', autor: 'Bongo Cat', descricao: 'Novo update traz sistema de adoção e cuidados com os bichinhos.' },
-  { id: '2', titulo: 'Novo mapa', autor: 'Park Run!', descricao: 'Conheça o mapa Floresta Negra com novos obstáculos e segredos.' },
-  { id: '3', titulo: 'Design 2.0', autor: 'wrx Comunista Mario', descricao: 'Redesign completo da UI e novas animações.' },
-  { id: '4', titulo: 'Novos veículos', autor: 'Racers', descricao: 'Três novos carros e modo multiplayer em tela dividida.' }
+  { id: '1', titulo: 'Abrigo animal', autor: 'Bongo Cat', descricao: 'Novo update traz sistema de adoção e cuidados com os bichinhos.', thumb: undefined as string | undefined },
+  { id: '2', titulo: 'Novo mapa', autor: 'Park Run!', descricao: 'Conheça o mapa Floresta Negra com novos obstáculos e segredos.', thumb: undefined as string | undefined },
+  { id: '3', titulo: 'Design 2.0', autor: 'wrx Comunista Mario', descricao: 'Redesign completo da UI e novas animações.', thumb: undefined as string | undefined },
+  { id: '4', titulo: 'Novos veículos', autor: 'Racers', descricao: 'Três novos carros e modo multiplayer em tela dividida.', thumb: undefined as string | undefined }
 ]
 
 const paginaAtual = ref(1)
