@@ -61,10 +61,8 @@
                       {{ g }}
                     </span>
                   </div>
-                  <p class="mt-2 flex items-center gap-2 text-sm text-muted">
-                    <span>Rating {{ jogo.rating }}%</span>
-                    <span>·</span>
-                    <span>{{ jogo.metaPercentual }}% meta</span>
+                  <p class="mt-2 text-sm text-muted">
+                    {{ jogo.metaPercentual }}% meta
                   </p>
                 </div>
               </NuxtLink>

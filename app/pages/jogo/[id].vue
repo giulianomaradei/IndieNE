@@ -181,7 +181,7 @@
               {{ jogo.descricao }}
             </p>
             <p v-if="jogo.desenvolvedor" class="mt-6 text-sm text-white">
-              <span class="text-muted">Desenvolvedor:</span>
+              <span class="text-muted">Desenvolvedor:&nbsp;</span>
               <NuxtLink :to="`/desenvolvedores/${slugDev}`" class="text-primary hover:underline">
                 {{ jogo.desenvolvedor }} (ver mais jogos)
               </NuxtLink>
@@ -206,10 +206,6 @@
               </p>
               <p class="mt-1 text-sm text-white">
                 Meta {{ formatarMoeda(jogo.metaValor) }}
-              </p>
-              <p class="mt-1 flex items-center gap-1 text-sm text-white">
-                Campanha flexível
-                <span class="text-muted" title="Info">?</span>
               </p>
               <NuxtLink
                 :to="`/contribuir?jogo=${id}`"

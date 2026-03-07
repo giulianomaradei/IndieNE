@@ -49,13 +49,8 @@
                 </span>
               </div>
               <p v-if="item.developer" class="mt-4 text-sm text-zinc-500">
-                Desenvolvedor: {{ item.developer }}
+                Desenvolvedor:&nbsp;{{ item.developer }}
               </p>
-              <div class="mt-4 flex items-center gap-4">
-                <div class="ml-auto flex h-10 w-10 items-center justify-center rounded-full bg-primary text-sm font-bold text-zinc-900">
-                  {{ item.rating ?? '87' }}%
-                </div>
-              </div>
             </div>
             <div class="mt-10">
               <NuxtLink
@@ -95,7 +90,6 @@ const props = defineProps<{
     image?: string
     tags?: string[]
     developer?: string
-    rating?: string
   }>
 }>()
 

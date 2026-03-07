@@ -55,15 +55,6 @@
               >
             </div>
             <div>
-              <label class="block text-sm font-medium text-white">Rating (%)</label>
-              <input
-                v-model="form.rating"
-                type="text"
-                class="mt-2 w-full rounded-lg border border-zinc-700 bg-surface px-4 py-2 text-white focus:border-primary focus:outline-none"
-                placeholder="87"
-              >
-            </div>
-            <div>
               <label class="block text-sm font-medium text-white">Meta de arrecadação</label>
               <input
                 v-model="form.metaValor"
@@ -362,7 +353,6 @@ const form = reactive({
   fotos: [] as string[],
   genero: [] as string[],
   desenvolvedor: 'To The Sky',
-  rating: '',
   metaPercentual: 0,
   valorArrecadado: '',
   metaValor: '',
@@ -386,7 +376,6 @@ watch(
       form.fotos = [...jogo.fotos]
       form.genero = [...jogo.genero]
       form.desenvolvedor = jogo.desenvolvedor
-      form.rating = jogo.rating
       form.metaValor = jogo.metaValor
       form.valorArrecadado = jogo.valorArrecadado
       form.metaPercentual = jogo.metaPercentual
@@ -416,7 +405,6 @@ function onSubmit () {
     fotos: form.fotos.filter(Boolean),
     genero: form.genero,
     desenvolvedor: form.desenvolvedor.trim(),
-    rating: form.rating.trim(),
     metaValor: form.metaValor.trim(),
     dias: Number(form.dias) || 0,
     dataPostagem: form.dataPostagem || new Date().toISOString().slice(0, 7),

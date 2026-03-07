@@ -63,11 +63,6 @@
               <p v-if="item.subtitle" class="mt-0.5 text-xs text-zinc-400 line-clamp-1">
                 {{ item.subtitle }}
               </p>
-              <div class="mt-2 flex items-center justify-end">
-                <div class="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-xs font-bold text-zinc-900">
-                  {{ item.rating ?? '—' }}%
-                </div>
-              </div>
             </div>
           </NuxtLink>
         </div>
@@ -80,7 +75,7 @@
 defineProps<{
   title: string
   verTudoHref?: string
-  items: Array<{ id?: string; title: string; subtitle?: string; image?: string; rating?: string }>
+  items: Array<{ id?: string; title: string; subtitle?: string; image?: string }>
 }>()
 
 const scrollRef = ref<HTMLElement | null>(null)

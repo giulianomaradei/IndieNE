@@ -16,8 +16,7 @@ export function useJogos () {
         subtitle: j.genero[0] ?? 'Indie',
         image: j.thumb,
         tags: j.genero,
-        developer: j.desenvolvedor,
-        rating: j.rating
+        developer: j.desenvolvedor
       }))
   )
 
@@ -28,8 +27,7 @@ export function useJogos () {
         id: j.id,
         title: j.title,
         subtitle: j.genero[0] ?? '',
-        image: j.thumb,
-        rating: j.rating
+        image: j.thumb
       }))
   )
 
@@ -40,8 +38,7 @@ export function useJogos () {
         id: j.id,
         title: j.title,
         subtitle: j.genero[0] ?? 'Survival',
-        image: j.thumb,
-        rating: j.rating
+        image: j.thumb
       }))
   )
 
@@ -52,8 +49,7 @@ export function useJogos () {
         id: j.id,
         title: j.title,
         subtitle: j.genero[0] ?? 'RPG',
-        image: j.thumb,
-        rating: j.rating
+        image: j.thumb
       }))
   )
 
