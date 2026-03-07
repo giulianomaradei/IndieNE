@@ -301,6 +301,7 @@ const id = computed(() => route.params.id as string)
 const { getComentarios, addComentario, getAvatarUrl } = useComentarios()
 const { getTotais: getReacoesTotais, getMinhaReacao, setReacao } = useComentarioReacoes()
 const { getExtra } = useContribuicoes()
+const { getPosts: getPostsDev } = usePostsDev()
 
 const jogo = computed(() => {
   const item = jogos.find(j => j.id === id.value)
@@ -333,7 +334,7 @@ const jogo = computed(() => {
     metaPercentual: item.metaPercentual,
     metaValor: detalhes.metaValor,
     fotos: detalhes.fotos,
-    atualizacoes: detalhes.atualizacoes
+    atualizacoes: [...getPostsDev(id.value), ...detalhes.atualizacoes]
   }
 })
 
