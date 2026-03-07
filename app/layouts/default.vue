@@ -8,6 +8,13 @@
 
         <nav class="hidden items-center gap-8 md:flex">
           <NuxtLink
+            to="/"
+            class="text-sm font-normal transition hover:opacity-90"
+            :class="$route.path === '/' ? 'text-primary' : 'text-muted'"
+          >
+            Início
+          </NuxtLink>
+          <NuxtLink
             to="/explorar"
             class="text-sm font-normal transition hover:opacity-90"
             :class="$route.path === '/explorar' ? 'text-primary' : 'text-muted'"
@@ -20,12 +27,6 @@
             :class="$route.path === '/como-funciona' ? 'text-primary' : 'text-muted'"
           >
             Como Funciona
-          </NuxtLink>
-          <NuxtLink
-            to="/crowdfunding"
-            class="text-sm font-normal text-muted transition hover:opacity-90"
-          >
-            Crowdfunding
           </NuxtLink>
         </nav>
 

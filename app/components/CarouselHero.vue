@@ -12,14 +12,14 @@
           class="flex min-w-full shrink-0 flex-col rounded-2xl bg-zinc-900 p-0 md:flex-row"
           style="scroll-snap-align: start;"
         >
-          <!-- Lado esquerdo: imagem do jogo -->
-          <div class="relative min-h-[240px] flex-1 overflow-hidden rounded-xl md:min-h-0">
-            <div class="aspect-video w-full min-w-0 overflow-hidden rounded-xl bg-zinc-800 md:aspect-video">
+          <!-- Lado esquerdo: imagem do jogo (altura fixa para não quebrar com imagens de tamanhos diferentes) -->
+          <div class="relative flex-1 min-w-0 overflow-hidden rounded-xl">
+            <div class="relative h-[240px] w-full overflow-hidden rounded-xl bg-zinc-800 md:h-[320px] md:min-w-[560px]">
               <img
                 v-if="item.image"
                 :src="item.image"
                 :alt="item.title"
-                class="h-full w-full object-cover"
+                class="absolute inset-0 h-full w-full object-cover object-center"
               >
               <div
                 v-else
@@ -28,7 +28,7 @@
                 {{ item.title }}
               </div>
             </div>
-            <div class="absolute bottom-4 left-4 text-2xl font-bold uppercase tracking-wide text-white md:text-3xl">
+            <div class="absolute bottom-4 left-4 text-2xl font-bold uppercase tracking-wide text-white drop-shadow-lg md:text-3xl">
               {{ item.title }}
             </div>
           </div>
@@ -52,23 +52,17 @@
                 Desenvolvedor: {{ item.developer }}
               </p>
               <div class="mt-4 flex items-center gap-4">
-                <button type="button" class="rounded p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600" aria-label="Salvar">
-                  <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" /></svg>
-                </button>
-                <button type="button" class="rounded p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600" aria-label="Compartilhar">
-                  <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
-                </button>
                 <div class="ml-auto flex h-10 w-10 items-center justify-center rounded-full bg-primary text-sm font-bold text-zinc-900">
                   {{ item.rating ?? '87' }}%
                 </div>
               </div>
             </div>
-            <div class="mt-6">
+            <div class="mt-10">
               <NuxtLink
-                to="/contribuir"
+                :to="item.id ? `/jogo/${item.id}` : '#'"
                 class="block w-full rounded-lg bg-primary py-3 text-center font-semibold text-zinc-900 transition hover:bg-primary/90"
               >
-                Contribuir
+                Ver mais
               </NuxtLink>
             </div>
           </div>

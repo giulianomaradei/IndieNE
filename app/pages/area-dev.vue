@@ -115,19 +115,23 @@
               <p class="mt-4 text-sm text-white">
                 Fotos
               </p>
+              <p class="mt-1 text-xs text-zinc-500">
+                Fotos dos posts (clique para ampliar)
+              </p>
               <div class="mt-2 flex flex-wrap gap-2">
-                <template v-if="jogoAtual.fotos?.length">
-                  <div
-                    v-for="(url, i) in jogoAtual.fotos"
+                <template v-if="fotosDosPosts.length">
+                  <button
+                    v-for="(foto, i) in fotosDosPosts"
                     :key="i"
-                    class="h-16 w-20 shrink-0 overflow-hidden rounded-lg bg-zinc-700"
+                    type="button"
+                    class="h-16 w-20 shrink-0 overflow-hidden rounded-lg bg-zinc-700 transition hover:ring-2 hover:ring-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                    @click="abrirFotoModal(foto)"
                   >
-                    <img :src="url" :alt="`Foto ${i + 1}`" class="h-full w-full object-cover">
-                  </div>
+                    <img :src="foto.src" :alt="foto.titulo" class="h-full w-full object-cover">
+                  </button>
                 </template>
-                <div v-else class="h-16 w-20 shrink-0 rounded-lg bg-zinc-700" />
-                <div class="flex h-16 w-20 shrink-0 items-center justify-center rounded-lg border border-dashed border-zinc-600 text-sm text-muted">
-                  + (editar para adicionar)
+                <div v-else class="rounded-lg border border-dashed border-zinc-600 px-4 py-3 text-sm text-muted">
+                  Nenhuma foto nos posts deste jogo.
                 </div>
               </div>
 
@@ -177,6 +181,42 @@
             @save="onSalvarJogo"
           />
 
+          <!-- Modal foto em destaque -->
+          <Teleport to="body">
+            <Transition name="fade">
+              <div
+                v-if="fotoModal"
+                class="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4"
+                role="dialog"
+                aria-modal="true"
+                aria-label="Visualizar foto"
+                @click.self="fecharFotoModal"
+              >
+                <button
+                  type="button"
+                  class="absolute right-4 top-4 rounded-full bg-zinc-800 p-2 text-white transition hover:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-primary"
+                  aria-label="Fechar"
+                  @click="fecharFotoModal"
+                >
+                  <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+                <div class="relative max-h-[90vh] max-w-4xl">
+                  <img
+                    :src="fotoModal.src"
+                    :alt="fotoModal.titulo"
+                    class="max-h-[90vh] w-auto max-w-full rounded-lg object-contain shadow-2xl"
+                    @click.stop
+                  >
+                  <p v-if="fotoModal.titulo" class="mt-3 text-center text-sm text-white">
+                    {{ fotoModal.titulo }}
+                  </p>
+                </div>
+              </div>
+            </Transition>
+          </Teleport>
+
           <!-- Posts -->
           <div class="mt-10 border-t border-zinc-700 pt-8">
             <h2 class="text-lg font-bold text-white">
@@ -196,7 +236,14 @@
                 </p>
                 <div class="mt-4 overflow-hidden rounded-lg bg-zinc-800">
                   <div class="aspect-video w-full">
+                    <img
+                      v-if="post.imagem"
+                      :src="post.imagem"
+                      :alt="post.titulo"
+                      class="h-full w-full object-cover"
+                    >
                     <div
+                      v-else
                       class="flex h-full w-full items-center justify-center text-zinc-500 text-sm"
                     >
                       Imagem
@@ -247,6 +294,7 @@
 <script setup lang="ts">
 import type { JogoDev } from '~/types/jogo-dev'
 import { useMeusJogos } from '~/composables/useMeusJogos'
+import { getDetalhesJogo } from '~/data/jogo-detalhes'
 
 definePageMeta({ layout: 'default', middleware: 'auth' })
 
@@ -259,13 +307,46 @@ const jogoParaEditar = ref<JogoDev | null>(null)
 // Selecionar primeiro jogo ao carregar
 watch(meusJogos, (list) => {
   if (!jogoSelecionado.value && list.length > 0) {
-    jogoSelecionado.value = list[0].id
+    const primeiro = list[0]
+    if (primeiro) jogoSelecionado.value = primeiro.id
   }
 }, { immediate: true })
 
 const jogoAtual = computed(() =>
   jogoSelecionado.value ? getJogoById(jogoSelecionado.value) : undefined
 )
+
+const posts = computed(() =>
+  getDetalhesJogo(jogoSelecionado.value).atualizacoes
+)
+
+const fotosDosPosts = computed(() => {
+  return posts.value.flatMap((p) =>
+    p.imagem ? [{ src: p.imagem, titulo: p.titulo }] : []
+  )
+})
+
+const fotoModal = ref<{ src: string; titulo: string } | null>(null)
+function abrirFotoModal (foto: { src: string; titulo: string }) {
+  fotoModal.value = foto
+}
+function fecharFotoModal () {
+  fotoModal.value = null
+}
+
+const escapeHandler = (e: KeyboardEvent) => {
+  if (e.key === 'Escape') fecharFotoModal()
+}
+watch(fotoModal, (aberto) => {
+  if (aberto) {
+    window.addEventListener('keydown', escapeHandler)
+  } else {
+    window.removeEventListener('keydown', escapeHandler)
+  }
+})
+onUnmounted(() => {
+  window.removeEventListener('keydown', escapeHandler)
+})
 
 function abrirModalCriar () {
   jogoParaEditar.value = null
@@ -285,30 +366,15 @@ function onSalvarJogo (payload: JogoDev | (Omit<JogoDev, 'id'>)) {
     jogoSelecionado.value = novo.id
   }
 }
-
-const posts = [
-  {
-    titulo: 'Novos personagens: Halloween Set',
-    data: '26/11 às 19h58',
-    descricao: 'Adiciona seis novos desafios que desbloqueiam itens cosméticos inéditos, que, combinados, criam um divertido traje de apicultor, um traje de astronauta e um traje de hoquei.',
-    comentarios: [
-      { usuario: '@japa_UDI', texto: 'Godbreakers já mostra um potencial enorme. A gameplay é extremamente divertida e bem feita.', likes: 58, dislikes: 0 },
-      { usuario: '@manoel_games', texto: 'Mesmo que fosse apenas falar do jogo eu iria ver haha desde o trailer eu tava empolgado', likes: 0, dislikes: 0 }
-    ]
-  },
-  {
-    titulo: 'Jardim Crepuscular',
-    data: '2 meses atrás',
-    descricao: 'Adiciona um novo cenário, o Jardim Crepuscular, repleto de flora bioluminescente e criaturas inéditas.',
-    comentarios: [
-      { usuario: '@tadala_queue', texto: 'Namoral muito hypado pô jogo assim que tiver na steam já vó deixar na minha wishlist', likes: 83, dislikes: 0 }
-    ]
-  },
-  {
-    titulo: 'Kael Ruvian - O Protagonista',
-    data: '6 meses atrás',
-    descricao: 'Um mensageiro errante marcado por energia arcana instável. Inclui cinco desafios que revelam fragmentos de sua história.',
-    comentarios: [] as { usuario: string; texto: string; likes: number; dislikes: number }[]
-  }
-]
 </script>
+
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+</style>

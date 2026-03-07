@@ -61,11 +61,15 @@
                 <!-- Comentários -->
                 <div class="mt-6 space-y-4 border-t border-zinc-700 pt-4">
                   <div
-                    v-for="(comentario, cIdx) in atualizacao.comentarios"
-                    :key="cIdx"
+                    v-for="(comentario, cIdx) in comentariosPorAtualizacao(idx)"
+                    :key="'c-' + idx + '-' + cIdx"
                     class="flex gap-3"
                   >
-                    <div class="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-zinc-700" />
+                    <img
+                      :src="comentario.avatar"
+                      :alt="comentario.usuario"
+                      class="h-10 w-10 shrink-0 rounded-full object-cover"
+                    >
                     <div class="min-w-0 flex-1">
                       <p class="text-sm font-medium text-muted">
                         {{ comentario.usuario }}
@@ -73,20 +77,77 @@
                       <p class="mt-1 text-sm text-white">
                         {{ comentario.texto }}
                       </p>
-                      <div class="mt-2 flex items-center gap-4 text-xs text-zinc-500">
-                        <span>{{ comentario.likes }} likes</span>
-                        <span>{{ comentario.dislikes }} dislikes</span>
+                      <div class="mt-2 flex items-center gap-3 text-xs text-zinc-500">
+                        <button
+                          v-if="isLoggedIn"
+                          type="button"
+                          :class="[
+                            'flex items-center gap-1 rounded px-2 py-1 transition',
+                            reacaoAtual(idx, cIdx) === 'like'
+                              ? 'bg-primary/20 text-primary'
+                              : 'hover:bg-zinc-700'
+                          ]"
+                          :title="'Curtir'"
+                          @click="reagir(idx, cIdx, 'like')"
+                        >
+                          <span aria-hidden="true">👍</span>
+                          {{ totalLikes(idx, cIdx) }}
+                        </button>
+                        <span v-else class="flex items-center gap-1">
+                          <span aria-hidden="true">👍</span>
+                          {{ totalLikes(idx, cIdx) }}
+                        </span>
+                        <button
+                          v-if="isLoggedIn"
+                          type="button"
+                          :class="[
+                            'flex items-center gap-1 rounded px-2 py-1 transition',
+                            reacaoAtual(idx, cIdx) === 'dislike'
+                              ? 'bg-primary/20 text-primary'
+                              : 'hover:bg-zinc-700'
+                          ]"
+                          :title="'Não curtir'"
+                          @click="reagir(idx, cIdx, 'dislike')"
+                        >
+                          <span aria-hidden="true">👎</span>
+                          {{ totalDislikes(idx, cIdx) }}
+                        </button>
+                        <span v-else class="flex items-center gap-1">
+                          <span aria-hidden="true">👎</span>
+                          {{ totalDislikes(idx, cIdx) }}
+                        </span>
                       </div>
                     </div>
                   </div>
-                  <div class="flex gap-3">
-                    <div class="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-zinc-700" />
+                  <form
+                    v-if="isLoggedIn"
+                    class="flex items-end gap-3"
+                    @submit.prevent="enviarComentario(idx)"
+                  >
+                    <img
+                      :src="avatarUsuarioAtual"
+                      alt=""
+                      class="h-10 w-10 shrink-0 rounded-full object-cover bg-zinc-700"
+                    >
                     <input
+                      v-model="getForm(idx).texto"
                       type="text"
                       placeholder="Adicione um comentário..."
                       class="min-w-0 flex-1 rounded-lg border border-zinc-700 bg-surface px-4 py-2 text-sm text-white placeholder:text-zinc-500 focus:border-primary focus:outline-none"
                     >
-                  </div>
+                    <button
+                      type="submit"
+                      class="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-dark transition hover:bg-primary/90"
+                    >
+                      Enviar
+                    </button>
+                  </form>
+                  <p v-else class="rounded-lg border border-zinc-700 bg-zinc-800/50 px-4 py-3 text-sm text-zinc-500">
+                    <NuxtLink to="/login" class="font-medium text-primary hover:underline">
+                      Faça login
+                    </NuxtLink>
+                    para comentar.
+                  </p>
                 </div>
               </article>
             </div>
@@ -129,19 +190,19 @@
             <!-- Crowdfunding -->
             <div class="mt-8 rounded-xl border border-zinc-700 bg-zinc-900/50 p-6">
               <p class="text-3xl font-bold text-white">
-                {{ jogo.valorArrecadado }}
+                {{ valorArrecadadoFormatado }}
               </p>
               <p class="mt-2 text-sm text-white">
-                apoiado por {{ jogo.apoiadores }} pessoas em {{ jogo.dias }} dias
+                apoiado por {{ totalApoiadores }} pessoas em {{ jogo.dias }} dias
               </p>
               <div class="mt-3 h-2 overflow-hidden rounded-full bg-zinc-700">
                 <div
                   class="h-full rounded-full bg-primary transition-all"
-                  :style="{ width: jogo.metaPercentual + '%' }"
+                  :style="{ width: percentualMeta + '%' }"
                 />
               </div>
               <p class="mt-2 text-sm font-medium text-white">
-                {{ jogo.metaPercentual }}%
+                {{ percentualMeta }}%
               </p>
               <p class="mt-1 text-sm text-white">
                 Meta {{ jogo.metaValor }}
@@ -151,53 +212,88 @@
                 <span class="text-muted" title="Info">?</span>
               </p>
               <NuxtLink
-                to="/contribuir"
+                :to="`/contribuir?jogo=${id}`"
                 class="mt-6 flex w-full items-center justify-center rounded-lg bg-primary px-6 py-3 text-base font-bold uppercase tracking-wide text-dark transition hover:bg-primary/90"
               >
                 Contribuir
               </NuxtLink>
             </div>
 
-            <!-- FOTOS -->
+            <!-- FOTOS (dos posts) -->
             <div class="mt-10 border-t border-zinc-700 pt-8">
               <h2 class="text-center text-sm font-medium uppercase tracking-widest text-white">
                 Fotos
               </h2>
+              <p class="mt-1 text-center text-xs text-zinc-500">
+                Clique para ampliar
+              </p>
               <div class="mt-6 grid grid-cols-3 gap-2">
-                <div
-                  v-for="(foto, fIdx) in jogo.fotos"
-                  :key="fIdx"
-                  class="aspect-square overflow-hidden rounded-lg bg-zinc-800"
-                >
-                  <img
-                    v-if="foto"
-                    :src="foto"
-                    alt=""
-                    class="h-full w-full object-cover"
+                <template v-if="fotosDosPosts.length">
+                  <button
+                    v-for="(foto, fIdx) in fotosDosPosts"
+                    :key="fIdx"
+                    type="button"
+                    class="aspect-square overflow-hidden rounded-lg bg-zinc-800 transition hover:ring-2 hover:ring-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                    @click="abrirFotoModal(foto)"
                   >
-                  <div
-                    v-else
-                    class="flex h-full w-full items-center justify-center text-zinc-500 text-xs"
-                  >
-                    {{ fIdx + 1 }}
-                  </div>
+                    <img
+                      :src="foto.src"
+                      :alt="foto.titulo"
+                      class="h-full w-full object-cover"
+                    >
+                  </button>
+                </template>
+                <div v-else class="col-span-3 rounded-lg border border-dashed border-zinc-600 py-8 text-center text-sm text-zinc-500">
+                  Nenhuma foto nos posts deste jogo.
                 </div>
               </div>
-              <NuxtLink
-                to="#fotos"
-                class="mt-4 block text-center text-sm font-medium uppercase tracking-widest text-primary hover:underline"
-              >
-                Ver mais
-              </NuxtLink>
             </div>
           </div>
         </aside>
       </div>
     </div>
+
+    <!-- Modal foto em destaque -->
+    <Teleport to="body">
+      <Transition name="fade">
+        <div
+          v-if="fotoModal"
+          class="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Visualizar foto"
+          @click.self="fecharFotoModal"
+        >
+          <button
+            type="button"
+            class="absolute right-4 top-4 rounded-full bg-zinc-800 p-2 text-white transition hover:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-primary"
+            aria-label="Fechar"
+            @click="fecharFotoModal"
+          >
+            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+          <div class="relative max-h-[90vh] max-w-4xl">
+            <img
+              :src="fotoModal.src"
+              :alt="fotoModal.titulo"
+              class="max-h-[90vh] w-auto max-w-full rounded-lg object-contain shadow-2xl"
+              @click.stop
+            >
+            <p v-if="fotoModal.titulo" class="mt-3 text-center text-sm text-white">
+              {{ fotoModal.titulo }}
+            </p>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 
 <script setup lang="ts">
+import type { Comentario } from '~/composables/useComentarios'
+import { getDetalhesJogo } from '~/data/jogo-detalhes'
 import { jogos } from '~/data/jogos'
 import { slugify } from '~/utils/slug'
 
@@ -206,10 +302,13 @@ definePageMeta({ layout: 'default' })
 const route = useRoute()
 const id = computed(() => route.params.id as string)
 
-const slugDev = computed(() => slugify(jogo.value.desenvolvedor))
+const { getComentarios, addComentario, getAvatarUrl } = useComentarios()
+const { getTotais: getReacoesTotais, getMinhaReacao, setReacao } = useComentarioReacoes()
+const { getExtra } = useContribuicoes()
 
 const jogo = computed(() => {
   const item = jogos.find(j => j.id === id.value)
+  const detalhes = getDetalhesJogo(id.value)
   if (!item) {
     return {
       titulo: 'Jogo não encontrado',
@@ -226,40 +325,150 @@ const jogo = computed(() => {
       atualizacoes: [] as { titulo: string; data: string; descricao: string; imagem: string; comentarios: { usuario: string; texto: string; likes: number; dislikes: number }[] }[]
     }
   }
-  const godBreakersMock = item.id === 'god-breakers' ? {
-    descricao: 'Assuma o controle de cada luta em um combate fluido e feroz enquanto conecta combos agressivos, cancela ataques e coordena sua equipe para criar a equipe perfeita e derrube criaturas brutas em vários mundos.',
-    valorArrecadado: 'R$ 68.745',
-    apoiadores: 851,
-    dias: 86,
-    metaValor: 'R$ 100.000',
-    fotos: ['', '', '', '', '', '', '', '', ''] as string[],
-    atualizacoes: [
-      { titulo: 'Novos personagens: Halloween Set', data: '26/11 às 19h58', descricao: 'Adiciona seis novos desafios que desbloqueiam itens cosméticos inéditos...', imagem: '', comentarios: [{ usuario: '@japa_UDI', texto: 'Godbreakers já mostra um potencial enorme.', likes: 58, dislikes: 0 }, { usuario: '@manoel_games', texto: 'Desde o trailer eu tava empolgado', likes: 0, dislikes: 0 }] },
-      { titulo: 'Jardim Crepuscular', data: '2 meses atrás', descricao: 'Adiciona um novo cenário, o Jardim Crepuscular...', imagem: '', comentarios: [{ usuario: '@tadala_queue', texto: 'Muito hypado, já vó deixar na wishlist', likes: 83, dislikes: 0 }] },
-      { titulo: 'Kael Ruvian - O Protagonista', data: '6 meses atrás', descricao: 'Um mensageiro errante marcado por energia arcana instável.', imagem: '', comentarios: [] as { usuario: string; texto: string; likes: number; dislikes: number }[] }
-    ]
-  } : {
-    descricao: '',
-    valorArrecadado: '—',
-    apoiadores: 0,
-    dias: 0,
-    metaValor: '—',
-    fotos: [] as string[],
-    atualizacoes: [] as { titulo: string; data: string; descricao: string; imagem: string; comentarios: { usuario: string; texto: string; likes: number; dislikes: number }[] }[]
-  }
   return {
     titulo: item.title,
-    descricao: godBreakersMock.descricao,
+    descricao: detalhes.descricao,
     tags: item.genero,
     desenvolvedor: item.desenvolvedor,
     hero: item.thumb ?? '',
-    valorArrecadado: godBreakersMock.valorArrecadado,
-    apoiadores: godBreakersMock.apoiadores,
-    dias: godBreakersMock.dias,
+    valorArrecadado: detalhes.valorArrecadado,
+    apoiadores: detalhes.apoiadores,
+    dias: detalhes.dias,
     metaPercentual: item.metaPercentual,
-    metaValor: godBreakersMock.metaValor,
-    fotos: godBreakersMock.fotos,
-    atualizacoes: godBreakersMock.atualizacoes
+    metaValor: detalhes.metaValor,
+    fotos: detalhes.fotos,
+    atualizacoes: detalhes.atualizacoes
   }
 })
+
+const slugDev = computed(() => slugify(jogo.value.desenvolvedor))
+
+// Comentários: merge dos mock com os do localStorage; cada comentário tem avatar
+function comentariosPorAtualizacao (idx: number): Comentario[] {
+  const base = jogo.value.atualizacoes[idx]?.comentarios ?? []
+  const withAvatar = base.map(c => ({
+    usuario: c.usuario,
+    texto: c.texto,
+    avatar: getAvatarUrl(c.usuario),
+    likes: c.likes,
+    dislikes: c.dislikes
+  }))
+  const stored = getComentarios(id.value, idx)
+  return [...withAvatar, ...stored]
+}
+
+function totalLikes (atualizacaoIdx: number, commentIdx: number): number {
+  const lista = comentariosPorAtualizacao(atualizacaoIdx)
+  const comentario = lista[commentIdx]
+  if (!comentario) return 0
+  const extra = getReacoesTotais(id.value, atualizacaoIdx, commentIdx)
+  return comentario.likes + extra.likes
+}
+function totalDislikes (atualizacaoIdx: number, commentIdx: number): number {
+  const lista = comentariosPorAtualizacao(atualizacaoIdx)
+  const comentario = lista[commentIdx]
+  if (!comentario) return 0
+  const extra = getReacoesTotais(id.value, atualizacaoIdx, commentIdx)
+  return comentario.dislikes + extra.dislikes
+}
+function reacaoAtual (atualizacaoIdx: number, commentIdx: number) {
+  return getMinhaReacao(id.value, atualizacaoIdx, commentIdx)
+}
+function reagir (atualizacaoIdx: number, commentIdx: number, tipo: 'like' | 'dislike') {
+  setReacao(id.value, atualizacaoIdx, commentIdx, tipo)
+}
+
+const comentarioForms = ref<Record<number, { texto: string }>>({})
+watch(
+  () => jogo.value.atualizacoes.length,
+  (len) => {
+    const next: Record<number, { texto: string }> = {}
+    for (let i = 0; i < len; i++) {
+      next[i] = comentarioForms.value[i] ?? { texto: '' }
+    }
+    comentarioForms.value = next
+  },
+  { immediate: true }
+)
+function getForm (idx: number) {
+  return comentarioForms.value[idx] ?? { texto: '' }
+}
+function enviarComentario (idx: number) {
+  const form = getForm(idx)
+  const texto = form.texto?.trim()
+  if (!texto) return
+  const nome = user.value?.nome || user.value?.email || 'Anônimo'
+  addComentario(id.value, idx, nome, texto)
+  form.texto = ''
+}
+
+const { user, isLoggedIn } = useAuth()
+const avatarUsuarioAtual = computed(() =>
+  user.value?.nome
+    ? getAvatarUrl(user.value.nome)
+    : 'https://api.dicebear.com/7.x/avataaars/svg?seed=anon'
+)
+
+// Valores base do mock (número) para somar com contribuições
+const valorBaseNumerico = computed(() => {
+  const item = jogos.find(j => j.id === id.value)
+  if (item?.id === 'god-breakers') return 68745
+  return 0
+})
+const apoiadoresBase = computed(() => {
+  const item = jogos.find(j => j.id === id.value)
+  if (item?.id === 'god-breakers') return 851
+  return 0
+})
+
+const extra = computed(() => getExtra(id.value))
+const totalValor = computed(() => valorBaseNumerico.value + extra.value.valorExtra)
+const totalApoiadores = computed(() => apoiadoresBase.value + extra.value.apoiadoresExtra)
+const valorArrecadadoFormatado = computed(() => {
+  if (totalValor.value <= 0) return jogo.value.valorArrecadado
+  return 'R$ ' + totalValor.value.toLocaleString('pt-BR')
+})
+const metaValorNumerico = 100000
+const percentualMeta = computed(() => {
+  const total = totalValor.value
+  if (total <= 0) return jogo.value.metaPercentual
+  return Math.min(100, Math.round((total / metaValorNumerico) * 100))
+})
+
+const fotosDosPosts = computed(() =>
+  jogo.value.atualizacoes.flatMap((p) =>
+    p.imagem ? [{ src: p.imagem, titulo: p.titulo }] : []
+  )
+)
+const fotoModal = ref<{ src: string; titulo: string } | null>(null)
+function abrirFotoModal (foto: { src: string; titulo: string }) {
+  fotoModal.value = foto
+}
+function fecharFotoModal () {
+  fotoModal.value = null
+}
+const escapeHandler = (e: KeyboardEvent) => {
+  if (e.key === 'Escape') fecharFotoModal()
+}
+watch(fotoModal, (aberto) => {
+  if (aberto) {
+    window.addEventListener('keydown', escapeHandler)
+  } else {
+    window.removeEventListener('keydown', escapeHandler)
+  }
+})
+onUnmounted(() => {
+  window.removeEventListener('keydown', escapeHandler)
+})
 </script>
+
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+</style>

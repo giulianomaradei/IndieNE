@@ -23,11 +23,11 @@
       <div class="mt-16 flex flex-col gap-10 lg:flex-row lg:items-start lg:gap-12">
         <!-- Imagem ilustrativa -->
         <div class="shrink-0 overflow-hidden rounded-xl bg-zinc-800 lg:w-2/5">
-          <div class="aspect-[4/5] w-full bg-zinc-800">
-            <div class="flex h-full w-full items-center justify-center text-zinc-500">
-              <span class="text-sm">Ilustração: financiamento coletivo</span>
-            </div>
-          </div>
+          <img
+            src="/images/financiamento-coletivo.jpg"
+            alt="Ilustração: financiamento coletivo"
+            class="aspect-[4/5] w-full object-cover"
+          >
         </div>
 
         <!-- Texto e lista -->
