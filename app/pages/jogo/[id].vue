@@ -302,10 +302,12 @@ const { getComentarios, addComentario, getAvatarUrl } = useComentarios()
 const { getTotais: getReacoesTotais, getMinhaReacao, setReacao } = useComentarioReacoes()
 const { getExtra } = useContribuicoes()
 const { getPosts: getPostsDev } = usePostsDev()
+const { getJogoById } = useMeusJogos()
 
 const jogo = computed(() => {
   const item = jogos.find(j => j.id === id.value)
   const detalhes = getDetalhesJogo(id.value)
+  const meusJogosEntry = getJogoById(id.value)
   if (!item) {
     return {
       titulo: 'Jogo não encontrado',
@@ -324,10 +326,10 @@ const jogo = computed(() => {
   }
   return {
     titulo: item.title,
-    descricao: detalhes.descricao,
+    descricao: meusJogosEntry?.descricao ?? detalhes.descricao,
     tags: item.genero,
     desenvolvedor: item.desenvolvedor,
-    hero: item.thumb ?? '',
+    hero: meusJogosEntry?.thumb ?? item.thumb ?? '',
     valorArrecadado: detalhes.valorArrecadado,
     apoiadores: detalhes.apoiadores,
     dias: detalhes.dias,

@@ -92,7 +92,23 @@
         <div class="min-w-0 flex-1">
           <template v-if="jogoAtual">
             <!-- Card do jogo selecionado -->
-            <div class="rounded-xl border border-primary/50 bg-zinc-900/50 p-6">
+            <div class="rounded-xl border border-primary/50 bg-zinc-900/50 overflow-hidden">
+              <!-- Foto principal (mesma do restante do sistema) -->
+              <div class="aspect-video w-full bg-zinc-800">
+                <img
+                  v-if="jogoAtual.thumb"
+                  :src="jogoAtual.thumb"
+                  :alt="jogoAtual.title"
+                  class="h-full w-full object-cover"
+                >
+                <div
+                  v-else
+                  class="flex h-full w-full items-center justify-center text-zinc-500 text-lg font-medium"
+                >
+                  {{ jogoAtual.title }}
+                </div>
+              </div>
+              <div class="p-6">
               <div class="flex items-start justify-between gap-4">
                 <h1 class="text-3xl font-bold text-white">
                   {{ jogoAtual.title }}
@@ -164,6 +180,7 @@
                 <p class="mt-1 text-sm text-white">
                   Meta {{ metaFormatada }}
                 </p>
+              </div>
               </div>
             </div>
           </template>

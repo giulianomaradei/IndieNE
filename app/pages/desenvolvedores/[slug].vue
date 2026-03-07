@@ -87,17 +87,17 @@
 </template>
 
 <script setup lang="ts">
-import { jogos } from '~/data/jogos'
 import { slugify } from '~/utils/slug'
 
 definePageMeta({ layout: 'default' })
 
 const route = useRoute()
 const slug = computed(() => (route.params.slug as string) ?? '')
+const { allJogos } = useJogos()
 
 const jogosDoDesenvolvedor = computed(() => {
   if (!slug.value) return []
-  return jogos.filter(j => slugify(j.desenvolvedor) === slug.value)
+  return allJogos.value.filter(j => slugify(j.desenvolvedor) === slug.value)
 })
 
 const desenvolvedor = computed(() => {
