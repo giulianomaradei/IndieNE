@@ -64,41 +64,16 @@
               >
             </div>
             <div>
-              <label class="block text-sm font-medium text-white">Valor arrecadado</label>
-              <input
-                v-model="form.valorArrecadado"
-                type="text"
-                class="mt-2 w-full rounded-lg border border-zinc-700 bg-surface px-4 py-2 text-white focus:border-primary focus:outline-none"
-                placeholder="R$ 68.745"
-              >
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-white">Meta</label>
+              <label class="block text-sm font-medium text-white">Meta de arrecadação</label>
               <input
                 v-model="form.metaValor"
                 type="text"
                 class="mt-2 w-full rounded-lg border border-zinc-700 bg-surface px-4 py-2 text-white focus:border-primary focus:outline-none"
                 placeholder="R$ 100.000"
               >
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-white">% Meta alcançada</label>
-              <input
-                v-model.number="form.metaPercentual"
-                type="number"
-                min="0"
-                max="100"
-                class="mt-2 w-full rounded-lg border border-zinc-700 bg-surface px-4 py-2 text-white focus:border-primary focus:outline-none"
-              >
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-white">Apoiadores</label>
-              <input
-                v-model.number="form.apoiadores"
-                type="number"
-                min="0"
-                class="mt-2 w-full rounded-lg border border-zinc-700 bg-surface px-4 py-2 text-white focus:border-primary focus:outline-none"
-              >
+              <p class="mt-1 text-xs text-zinc-500">
+                Valor arrecadado, apoiadores e % da meta são calculados automaticamente pelas contribuições.
+              </p>
             </div>
             <div>
               <label class="block text-sm font-medium text-white">Dias (campanha)</label>
@@ -412,9 +387,9 @@ watch(
       form.genero = [...jogo.genero]
       form.desenvolvedor = jogo.desenvolvedor
       form.rating = jogo.rating
-      form.metaPercentual = jogo.metaPercentual
-      form.valorArrecadado = jogo.valorArrecadado
       form.metaValor = jogo.metaValor
+      form.valorArrecadado = jogo.valorArrecadado
+      form.metaPercentual = jogo.metaPercentual
       form.apoiadores = jogo.apoiadores
       form.dias = jogo.dias
       form.dataPostagem = jogo.dataPostagem
@@ -434,7 +409,7 @@ watch(
 
 function onSubmit () {
   form.genero = generoTexto.value.split(/[,，]/).map(s => s.trim()).filter(Boolean)
-  const payload = {
+  const base = {
     title: form.title.trim(),
     descricao: form.descricao.trim(),
     thumb: form.thumb.trim(),
@@ -442,16 +417,22 @@ function onSubmit () {
     genero: form.genero,
     desenvolvedor: form.desenvolvedor.trim(),
     rating: form.rating.trim(),
-    metaPercentual: Number(form.metaPercentual) || 0,
-    valorArrecadado: form.valorArrecadado.trim(),
     metaValor: form.metaValor.trim(),
-    apoiadores: Number(form.apoiadores) || 0,
     dias: Number(form.dias) || 0,
     dataPostagem: form.dataPostagem || new Date().toISOString().slice(0, 7),
     dataConclusao: form.dataConclusao.trim(),
     qtdeJogadores: form.qtdeJogadores.trim() || '1',
     compatControle: form.compatControle,
     so: form.so
+  }
+  const valorArrecadado = props.jogo?.valorArrecadado ?? '—'
+  const apoiadores = props.jogo?.apoiadores ?? 0
+  const metaPercentual = props.jogo?.metaPercentual ?? 0
+  const payload = {
+    ...base,
+    valorArrecadado,
+    apoiadores,
+    metaPercentual
   }
   if (props.jogo) {
     emit('save', { ...payload, id: props.jogo.id })

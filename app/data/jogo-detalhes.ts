@@ -15,31 +15,37 @@ export interface Atualizacao {
 
 export interface DetalhesJogo {
   descricao: string
-  valorArrecadado: string
+  valorArrecadado: number
   apoiadores: number
   dias: number
-  metaValor: string
+  metaValor: number
   fotos: string[]
   atualizacoes: Atualizacao[]
 }
 
 const vazio: DetalhesJogo = {
   descricao: '',
-  valorArrecadado: '—',
+  valorArrecadado: 0,
   apoiadores: 0,
   dias: 0,
-  metaValor: '—',
+  metaValor: 0,
   fotos: [],
   atualizacoes: []
+}
+
+/** Formata número como moeda para o layout (ex.: 68745 → "R$ 68.745") */
+export function formatarMoeda (valor: number): string {
+  if (valor <= 0) return 'R$ 0'
+  return 'R$ ' + valor.toLocaleString('pt-BR')
 }
 
 const detalhesPorJogo: Record<string, DetalhesJogo> = {
   'god-breakers': {
     descricao: 'Assuma o controle de cada luta em um combate fluido e feroz enquanto conecta combos agressivos, cancela ataques e coordena sua equipe para criar a equipe perfeita e derrube criaturas brutas em vários mundos.',
-    valorArrecadado: 'R$ 68.745',
+    valorArrecadado: 68745,
     apoiadores: 851,
     dias: 86,
-    metaValor: 'R$ 100.000',
+    metaValor: 100000,
     fotos: ['', '', '', '', '', '', '', '', ''],
     atualizacoes: [
       {
@@ -74,4 +80,22 @@ const detalhesPorJogo: Record<string, DetalhesJogo> = {
 
 export function getDetalhesJogo (jogoId: string): DetalhesJogo {
   return detalhesPorJogo[jogoId] ?? { ...vazio }
+}
+
+/** Converte string do form "R$ 100.000" em número (para meta editável na área DEV). */
+export function parseMetaValor (s: string | undefined): number {
+  if (!s || s === '—') return 0
+  const num = s.replace(/[R$\s.]/g, '').replace(',', '.')
+  const n = Number(num)
+  return Number.isFinite(n) ? n : 0
+}
+
+/** Base da campanha (valor + apoiadores) para somar com contribuições. Fonte única. */
+export function getBaseCampanha (jogoId: string): { valorNumerico: number; apoiadores: number; metaNumerico: number } {
+  const d = getDetalhesJogo(jogoId)
+  return {
+    valorNumerico: d.valorArrecadado,
+    apoiadores: d.apoiadores,
+    metaNumerico: d.metaValor
+  }
 }

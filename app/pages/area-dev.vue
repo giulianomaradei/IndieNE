@@ -5,13 +5,19 @@
         <!-- Coluna esquerda: perfil estúdio + meus jogos -->
         <aside class="w-full shrink-0 lg:w-80">
           <div class="flex flex-col gap-6">
-            <!-- Card estúdio To the Sky -->
+            <!-- Card estúdio Supergiant Games -->
             <div class="rounded-xl border border-primary/50 bg-zinc-900/50 p-6">
               <div class="flex items-start gap-4">
-                <div class="h-20 w-20 shrink-0 overflow-hidden rounded-full bg-zinc-700" />
+                <div class="h-20 w-20 shrink-0 overflow-hidden rounded-full bg-zinc-700">
+                  <img
+                    src="/images/supergiantgames.jpg"
+                    alt="Supergiant Games"
+                    class="h-full w-full object-cover"
+                  >
+                </div>
                 <div class="min-w-0 flex-1">
                   <h2 class="text-2xl font-bold text-white">
-                    To the Sky
+                    Supergiant Games
                   </h2>
                   <p class="mt-1 text-sm text-muted">
                     Pequeno estúdio indie
@@ -27,9 +33,6 @@
               <div class="mt-4 h-px w-full bg-zinc-700" />
               <p class="mt-4 text-sm text-muted">
                 Membro desde 2019
-              </p>
-              <p class="mt-1 text-sm text-white">
-                R$ 97.869 arrecadados em 4 jogos
               </p>
               <div class="mt-3 h-2 w-full overflow-hidden rounded-full bg-zinc-700">
                 <div class="h-full rounded-full bg-primary" :style="{ width: '60%' }" />
@@ -68,6 +71,12 @@
                         :alt="item.title"
                         class="h-full w-full object-cover"
                       >
+                      <div
+                        v-else
+                        class="flex h-full w-full items-center justify-center text-lg font-bold text-zinc-500"
+                      >
+                        {{ (item.title || '?').charAt(0).toUpperCase() }}
+                      </div>
                     </div>
                     <span class="min-w-0 flex-1 truncate text-sm font-medium">
                       {{ item.title }}
@@ -135,38 +144,26 @@
                 </div>
               </div>
 
-              <!-- Crowdfunding (resumo) -->
+              <!-- Crowdfunding (resumo) – valor, apoiadores e % calculados pelas contribuições -->
               <div class="mt-8 border-t border-zinc-700 pt-6">
                 <p class="text-3xl font-bold text-white">
-                  {{ jogoAtual.valorArrecadado || '—' }}
+                  {{ valorArrecadadoDisplay }}
                 </p>
                 <p class="mt-2 text-sm text-white">
-                  apoiado por {{ jogoAtual.apoiadores }} pessoas em {{ jogoAtual.dias }} dias
+                  apoiado por {{ totalApoiadoresDisplay }} pessoas em {{ jogoAtual.dias }} dias
                 </p>
                 <div class="mt-3 h-2 w-full overflow-hidden rounded-full bg-zinc-700">
                   <div
                     class="h-full rounded-full bg-primary transition-all"
-                    :style="{ width: Math.min(100, jogoAtual.metaPercentual || 0) + '%' }"
+                    :style="{ width: Math.min(100, percentualMetaDisplay) + '%' }"
                   />
                 </div>
                 <p class="mt-2 text-sm font-medium text-white">
-                  {{ jogoAtual.metaPercentual }}%
+                  {{ percentualMetaDisplay }}%
                 </p>
                 <p class="mt-1 text-sm text-white">
-                  Meta {{ jogoAtual.metaValor || '—' }}
+                  Meta {{ metaFormatada }}
                 </p>
-                <p class="mt-1 text-sm text-white">
-                  Campanha flexível*
-                </p>
-                <p class="mt-2 text-xs text-muted">
-                  *Permite que usuários contribuam
-                </p>
-                <NuxtLink
-                  to="#stripe"
-                  class="mt-4 inline-flex items-center justify-center rounded-lg bg-primary px-6 py-3 text-sm font-bold text-dark transition hover:bg-primary/90"
-                >
-                  Acessar Stripe
-                </NuxtLink>
               </div>
             </div>
           </template>
@@ -259,7 +256,11 @@
                     :key="cIdx"
                     class="flex gap-3"
                   >
-                    <div class="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-zinc-700" />
+                    <img
+                      :src="getAvatarUrl(comentario.usuario)"
+                      :alt="comentario.usuario"
+                      class="h-10 w-10 shrink-0 rounded-full object-cover"
+                    >
                     <div class="min-w-0 flex-1">
                       <p class="text-sm font-medium text-muted">
                         {{ comentario.usuario }}
@@ -274,7 +275,11 @@
                     </div>
                   </div>
                   <div class="flex gap-3">
-                    <div class="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-zinc-700" />
+                    <img
+                      :src="avatarUsuarioAtual"
+                      alt=""
+                      class="h-10 w-10 shrink-0 rounded-full object-cover bg-zinc-700"
+                    >
                     <input
                       type="text"
                       placeholder="Adicione um comentário..."
@@ -294,11 +299,19 @@
 <script setup lang="ts">
 import type { JogoDev } from '~/types/jogo-dev'
 import { useMeusJogos } from '~/composables/useMeusJogos'
-import { getDetalhesJogo } from '~/data/jogo-detalhes'
+import { formatarMoeda, getBaseCampanha, getDetalhesJogo, parseMetaValor } from '~/data/jogo-detalhes'
 
 definePageMeta({ layout: 'default', middleware: 'auth' })
 
 const { meusJogos, addJogo, updateJogo, getJogoById } = useMeusJogos()
+const { getExtra } = useContribuicoes()
+const { getAvatarUrl } = useComentarios()
+const { user } = useAuth()
+const avatarUsuarioAtual = computed(() =>
+  user.value?.nome
+    ? getAvatarUrl(user.value.nome)
+    : 'https://api.dicebear.com/7.x/avataaars/svg?seed=anon'
+)
 
 const jogoSelecionado = ref('')
 const modalAberto = ref(false)
@@ -315,6 +328,28 @@ watch(meusJogos, (list) => {
 const jogoAtual = computed(() =>
   jogoSelecionado.value ? getJogoById(jogoSelecionado.value) : undefined
 )
+
+const baseCampanha = computed(() =>
+  jogoSelecionado.value ? getBaseCampanha(jogoSelecionado.value) : { valorNumerico: 0, apoiadores: 0, metaNumerico: 0 }
+)
+const contribuicoesJogo = computed(() =>
+  jogoSelecionado.value ? getExtra(jogoSelecionado.value) : { valorExtra: 0, apoiadoresExtra: 0 }
+)
+const totalValorDisplay = computed(() => baseCampanha.value.valorNumerico + contribuicoesJogo.value.valorExtra)
+const valorArrecadadoDisplay = computed(() => formatarMoeda(totalValorDisplay.value))
+const totalApoiadoresDisplay = computed(() => baseCampanha.value.apoiadores + contribuicoesJogo.value.apoiadoresExtra)
+const metaNumericoDisplay = computed(() =>
+  baseCampanha.value.metaNumerico || parseMetaValor(jogoAtual.value?.metaValor)
+)
+const metaFormatada = computed(() =>
+  metaNumericoDisplay.value > 0 ? formatarMoeda(metaNumericoDisplay.value) : (jogoAtual.value?.metaValor || '—')
+)
+const percentualMetaDisplay = computed(() => {
+  const metaNum = metaNumericoDisplay.value
+  if (metaNum <= 0) return 0
+  const total = totalValorDisplay.value
+  return Math.min(100, Math.round((total / metaNum) * 100))
+})
 
 const posts = computed(() =>
   getDetalhesJogo(jogoSelecionado.value).atualizacoes

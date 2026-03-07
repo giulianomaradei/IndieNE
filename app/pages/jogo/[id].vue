@@ -205,7 +205,7 @@
                 {{ percentualMeta }}%
               </p>
               <p class="mt-1 text-sm text-white">
-                Meta {{ jogo.metaValor }}
+                Meta {{ formatarMoeda(jogo.metaValor) }}
               </p>
               <p class="mt-1 flex items-center gap-1 text-sm text-white">
                 Campanha flexível
@@ -293,7 +293,7 @@
 
 <script setup lang="ts">
 import type { Comentario } from '~/composables/useComentarios'
-import { getDetalhesJogo } from '~/data/jogo-detalhes'
+import { formatarMoeda, getBaseCampanha, getDetalhesJogo } from '~/data/jogo-detalhes'
 import { jogos } from '~/data/jogos'
 import { slugify } from '~/utils/slug'
 
@@ -316,11 +316,11 @@ const jogo = computed(() => {
       tags: [] as string[],
       desenvolvedor: '',
       hero: '' as string,
-      valorArrecadado: '—',
+      valorArrecadado: 0,
       apoiadores: 0,
       dias: 0,
       metaPercentual: 0,
-      metaValor: '—',
+      metaValor: 0,
       fotos: [] as string[],
       atualizacoes: [] as { titulo: string; data: string; descricao: string; imagem: string; comentarios: { usuario: string; texto: string; likes: number; dislikes: number }[] }[]
     }
@@ -409,30 +409,18 @@ const avatarUsuarioAtual = computed(() =>
     : 'https://api.dicebear.com/7.x/avataaars/svg?seed=anon'
 )
 
-// Valores base do mock (número) para somar com contribuições
-const valorBaseNumerico = computed(() => {
-  const item = jogos.find(j => j.id === id.value)
-  if (item?.id === 'god-breakers') return 68745
-  return 0
-})
-const apoiadoresBase = computed(() => {
-  const item = jogos.find(j => j.id === id.value)
-  if (item?.id === 'god-breakers') return 851
-  return 0
-})
-
+// Campanha: base (jogo-detalhes) + contribuições — mesma lógica da área DEV
+const baseCampanha = computed(() => getBaseCampanha(id.value))
 const extra = computed(() => getExtra(id.value))
-const totalValor = computed(() => valorBaseNumerico.value + extra.value.valorExtra)
-const totalApoiadores = computed(() => apoiadoresBase.value + extra.value.apoiadoresExtra)
-const valorArrecadadoFormatado = computed(() => {
-  if (totalValor.value <= 0) return jogo.value.valorArrecadado
-  return 'R$ ' + totalValor.value.toLocaleString('pt-BR')
-})
-const metaValorNumerico = 100000
+const totalValor = computed(() => baseCampanha.value.valorNumerico + extra.value.valorExtra)
+const totalApoiadores = computed(() => baseCampanha.value.apoiadores + extra.value.apoiadoresExtra)
+const valorArrecadadoFormatado = computed(() => formatarMoeda(totalValor.value))
 const percentualMeta = computed(() => {
   const total = totalValor.value
+  const meta = baseCampanha.value.metaNumerico
   if (total <= 0) return jogo.value.metaPercentual
-  return Math.min(100, Math.round((total / metaValorNumerico) * 100))
+  if (meta <= 0) return 0
+  return Math.min(100, Math.round((total / meta) * 100))
 })
 
 const fotosDosPosts = computed(() =>
