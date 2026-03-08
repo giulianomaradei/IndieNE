@@ -3,11 +3,22 @@ import { jogos as jogosData } from '~/data/jogos'
 
 export type { Jogo }
 
-const allJogos = jogosData
-
 export function useJogos () {
+  const { getJogoById } = useMeusJogos()
+
+  /** Lista de jogos com thumb/descrição centralizados (meus jogos sobrescrevem o catálogo). */
+  const allJogos = computed(() =>
+    jogosData.map(j => {
+      const dev = getJogoById(j.id)
+      return {
+        ...j,
+        thumb: dev?.thumb ?? j.thumb
+      }
+    })
+  )
+
   const destaqueHero = computed(() =>
-    allJogos
+    allJogos.value
       .filter(j => j.categorias.includes('destaque-hero'))
       .slice(0, 3)
       .map(j => ({
@@ -16,44 +27,40 @@ export function useJogos () {
         subtitle: j.genero[0] ?? 'Indie',
         image: j.thumb,
         tags: j.genero,
-        developer: j.desenvolvedor,
-        rating: j.rating
+        developer: j.desenvolvedor
       }))
   )
 
   const jogosDestaque = computed(() =>
-    allJogos
+    allJogos.value
       .filter(j => j.categorias.includes('destaque'))
       .map(j => ({
         id: j.id,
         title: j.title,
         subtitle: j.genero[0] ?? '',
-        image: j.thumb,
-        rating: j.rating
+        image: j.thumb
       }))
   )
 
   const jogosSobrevivencia = computed(() =>
-    allJogos
+    allJogos.value
       .filter(j => j.categorias.includes('sobrevivencia'))
       .map(j => ({
         id: j.id,
         title: j.title,
         subtitle: j.genero[0] ?? 'Survival',
-        image: j.thumb,
-        rating: j.rating
+        image: j.thumb
       }))
   )
 
   const jogosRpg = computed(() =>
-    allJogos
+    allJogos.value
       .filter(j => j.categorias.includes('rpg'))
       .map(j => ({
         id: j.id,
         title: j.title,
         subtitle: j.genero[0] ?? 'RPG',
-        image: j.thumb,
-        rating: j.rating
+        image: j.thumb
       }))
   )
 
@@ -62,14 +69,14 @@ export function useJogos () {
     const desenvolvedores = new Set<string>()
     const jogadores = new Set<string>()
     const sistemas = new Set<string>()
-    allJogos.forEach(j => {
+    allJogos.value.forEach(j => {
       j.genero.forEach(g => generos.add(g))
       desenvolvedores.add(j.desenvolvedor)
       jogadores.add(j.qtdeJogadores)
       j.so.forEach(s => sistemas.add(s))
     })
     const metas = [0, 25, 50, 75, 100]
-    const anosPostagem = Array.from(new Set(allJogos.map(j => j.dataPostagem.slice(0, 4)))).filter(Boolean).sort().reverse()
+    const anosPostagem = Array.from(new Set(allJogos.value.map(j => j.dataPostagem.slice(0, 4)))).filter(Boolean).sort().reverse()
     return {
       generos: Array.from(generos).sort(),
       desenvolvedores: Array.from(desenvolvedores).sort(),
@@ -103,7 +110,7 @@ export function useJogosFiltrados (filtros: {
   const { allJogos, opcoesFiltros } = useJogos()
 
   const jogosFiltrados = computed(() => {
-    let list = [...allJogos]
+    let list = [...allJogos.value]
     const q = filtros.busca.value.trim().toLowerCase()
     if (q) {
       list = list.filter(

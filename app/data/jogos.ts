@@ -4,7 +4,6 @@ export interface Jogo {
   thumb?: string
   genero: string[]
   desenvolvedor: string
-  rating: string
   metaPercentual: number
   dataPostagem: string
   dataConclusao?: string

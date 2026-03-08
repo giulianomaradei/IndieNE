@@ -61,10 +61,8 @@
                       {{ g }}
                     </span>
                   </div>
-                  <p class="mt-2 flex items-center gap-2 text-sm text-muted">
-                    <span>Rating {{ jogo.rating }}%</span>
-                    <span>·</span>
-                    <span>{{ jogo.metaPercentual }}% meta</span>
+                  <p class="mt-2 text-sm text-muted">
+                    {{ jogo.metaPercentual }}% meta
                   </p>
                 </div>
               </NuxtLink>
@@ -89,17 +87,17 @@
 </template>
 
 <script setup lang="ts">
-import { jogos } from '~/data/jogos'
 import { slugify } from '~/utils/slug'
 
 definePageMeta({ layout: 'default' })
 
 const route = useRoute()
 const slug = computed(() => (route.params.slug as string) ?? '')
+const { allJogos } = useJogos()
 
 const jogosDoDesenvolvedor = computed(() => {
   if (!slug.value) return []
-  return jogos.filter(j => slugify(j.desenvolvedor) === slug.value)
+  return allJogos.value.filter(j => slugify(j.desenvolvedor) === slug.value)
 })
 
 const desenvolvedor = computed(() => {

@@ -6,7 +6,6 @@ export interface JogoDev {
   fotos: string[]
   genero: string[]
   desenvolvedor: string
-  rating: string
   metaPercentual: number
   valorArrecadado: string
   metaValor: string
@@ -27,7 +26,6 @@ export function jogoDevVazio (): Omit<JogoDev, 'id'> {
     fotos: [],
     genero: [],
     desenvolvedor: 'To The Sky',
-    rating: '',
     metaPercentual: 0,
     valorArrecadado: '',
     metaValor: '',

@@ -92,7 +92,23 @@
         <div class="min-w-0 flex-1">
           <template v-if="jogoAtual">
             <!-- Card do jogo selecionado -->
-            <div class="rounded-xl border border-primary/50 bg-zinc-900/50 p-6">
+            <div class="rounded-xl border border-primary/50 bg-zinc-900/50 overflow-hidden">
+              <!-- Foto principal (mesma do restante do sistema) -->
+              <div class="aspect-video w-full bg-zinc-800">
+                <img
+                  v-if="jogoAtual.thumb"
+                  :src="jogoAtual.thumb"
+                  :alt="jogoAtual.title"
+                  class="h-full w-full object-cover"
+                >
+                <div
+                  v-else
+                  class="flex h-full w-full items-center justify-center text-zinc-500 text-lg font-medium"
+                >
+                  {{ jogoAtual.title }}
+                </div>
+              </div>
+              <div class="p-6">
               <div class="flex items-start justify-between gap-4">
                 <h1 class="text-3xl font-bold text-white">
                   {{ jogoAtual.title }}
@@ -165,6 +181,7 @@
                   Meta {{ metaFormatada }}
                 </p>
               </div>
+              </div>
             </div>
           </template>
           <div v-else class="rounded-xl border border-primary/50 bg-zinc-900/50 p-8 text-center text-white">
@@ -175,7 +192,15 @@
           <ModalJogoForm
             v-model="modalAberto"
             :jogo="jogoParaEditar"
+            nome-estudio="Supergiant Games"
             @save="onSalvarJogo"
+          />
+
+          <ModalNovoPost
+            v-model="modalNovoPostAberto"
+            :jogo-id="jogoSelecionado"
+            :jogo-title="jogoAtual?.title"
+            @post="onNovoPost"
           />
 
           <!-- Modal foto em destaque -->
@@ -216,9 +241,19 @@
 
           <!-- Posts -->
           <div class="mt-10 border-t border-zinc-700 pt-8">
-            <h2 class="text-lg font-bold text-white">
-              Posts
-            </h2>
+            <div class="flex items-center justify-between">
+              <h2 class="text-lg font-bold text-white">
+                Posts
+              </h2>
+              <button
+                v-if="jogoAtual"
+                type="button"
+                class="rounded-full bg-primary px-4 py-2 text-sm font-bold text-dark transition hover:bg-primary/90"
+                @click="modalNovoPostAberto = true"
+              >
+                Novo post
+              </button>
+            </div>
             <div class="mt-6 flex flex-col gap-6">
               <article
                 v-for="(post, idx) in posts"
@@ -274,18 +309,6 @@
                       </div>
                     </div>
                   </div>
-                  <div class="flex gap-3">
-                    <img
-                      :src="avatarUsuarioAtual"
-                      alt=""
-                      class="h-10 w-10 shrink-0 rounded-full object-cover bg-zinc-700"
-                    >
-                    <input
-                      type="text"
-                      placeholder="Adicione um comentário..."
-                      class="min-w-0 flex-1 rounded-lg border border-zinc-700 bg-surface px-4 py-2 text-sm text-white placeholder:text-zinc-500 focus:border-primary focus:outline-none"
-                    >
-                  </div>
                 </div>
               </article>
             </div>
@@ -305,16 +328,12 @@ definePageMeta({ layout: 'default', middleware: 'auth' })
 
 const { meusJogos, addJogo, updateJogo, getJogoById } = useMeusJogos()
 const { getExtra } = useContribuicoes()
+const { getPosts: getPostsDev, addPost: addPostDev } = usePostsDev()
 const { getAvatarUrl } = useComentarios()
-const { user } = useAuth()
-const avatarUsuarioAtual = computed(() =>
-  user.value?.nome
-    ? getAvatarUrl(user.value.nome)
-    : 'https://api.dicebear.com/7.x/avataaars/svg?seed=anon'
-)
 
 const jogoSelecionado = ref('')
 const modalAberto = ref(false)
+const modalNovoPostAberto = ref(false)
 const jogoParaEditar = ref<JogoDev | null>(null)
 
 // Selecionar primeiro jogo ao carregar
@@ -351,9 +370,11 @@ const percentualMetaDisplay = computed(() => {
   return Math.min(100, Math.round((total / metaNum) * 100))
 })
 
-const posts = computed(() =>
-  getDetalhesJogo(jogoSelecionado.value).atualizacoes
-)
+const posts = computed(() => {
+  const base = getDetalhesJogo(jogoSelecionado.value).atualizacoes
+  const devPosts = getPostsDev(jogoSelecionado.value)
+  return [...devPosts, ...base]
+})
 
 const fotosDosPosts = computed(() => {
   return posts.value.flatMap((p) =>
@@ -400,6 +421,26 @@ function onSalvarJogo (payload: JogoDev | (Omit<JogoDev, 'id'>)) {
     const novo = addJogo(payload)
     jogoSelecionado.value = novo.id
   }
+}
+
+function formatarDataAgora () {
+  const d = new Date()
+  const h = d.getHours()
+  const m = d.getMinutes()
+  const dia = d.getDate()
+  const mes = d.getMonth() + 1
+  const ano = d.getFullYear()
+  return `${dia}/${mes}/${ano} às ${h.toString().padStart(2, '0')}h${m.toString().padStart(2, '0')}`
+}
+
+function onNovoPost (payload: { titulo: string; descricao: string; imagem?: string }) {
+  if (!jogoSelecionado.value) return
+  addPostDev(jogoSelecionado.value, {
+    titulo: payload.titulo,
+    descricao: payload.descricao,
+    imagem: payload.imagem,
+    data: formatarDataAgora()
+  })
 }
 </script>
 

@@ -47,23 +47,6 @@
               />
             </div>
             <div>
-              <label class="block text-sm font-medium text-white">Desenvolvedor</label>
-              <input
-                v-model="form.desenvolvedor"
-                type="text"
-                class="mt-2 w-full rounded-lg border border-zinc-700 bg-surface px-4 py-2 text-white focus:border-primary focus:outline-none"
-              >
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-white">Rating (%)</label>
-              <input
-                v-model="form.rating"
-                type="text"
-                class="mt-2 w-full rounded-lg border border-zinc-700 bg-surface px-4 py-2 text-white focus:border-primary focus:outline-none"
-                placeholder="87"
-              >
-            </div>
-            <div>
               <label class="block text-sm font-medium text-white">Meta de arrecadação</label>
               <input
                 v-model="form.metaValor"
@@ -257,10 +240,14 @@
 import type { JogoDev } from '~/types/jogo-dev'
 import { jogoDevVazio } from '~/types/jogo-dev'
 
-const props = defineProps<{
-  modelValue: boolean
-  jogo: JogoDev | null
-}>()
+const props = withDefaults(
+  defineProps<{
+    modelValue: boolean
+    jogo: JogoDev | null
+    nomeEstudio?: string
+  }>(),
+  { nomeEstudio: '' }
+)
 
 const emit = defineEmits<{
   'update:modelValue': [value: boolean]
@@ -362,7 +349,6 @@ const form = reactive({
   fotos: [] as string[],
   genero: [] as string[],
   desenvolvedor: 'To The Sky',
-  rating: '',
   metaPercentual: 0,
   valorArrecadado: '',
   metaValor: '',
@@ -386,7 +372,6 @@ watch(
       form.fotos = [...jogo.fotos]
       form.genero = [...jogo.genero]
       form.desenvolvedor = jogo.desenvolvedor
-      form.rating = jogo.rating
       form.metaValor = jogo.metaValor
       form.valorArrecadado = jogo.valorArrecadado
       form.metaPercentual = jogo.metaPercentual
@@ -400,6 +385,7 @@ watch(
       generoTexto.value = form.genero.join(', ')
     } else {
       Object.assign(form, jogoDevVazio())
+      form.desenvolvedor = props.nomeEstudio.trim() || form.desenvolvedor
       form.dataPostagem = new Date().toISOString().slice(0, 7)
       generoTexto.value = ''
     }
@@ -416,7 +402,6 @@ function onSubmit () {
     fotos: form.fotos.filter(Boolean),
     genero: form.genero,
     desenvolvedor: form.desenvolvedor.trim(),
-    rating: form.rating.trim(),
     metaValor: form.metaValor.trim(),
     dias: Number(form.dias) || 0,
     dataPostagem: form.dataPostagem || new Date().toISOString().slice(0, 7),

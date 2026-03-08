@@ -181,7 +181,7 @@
               {{ jogo.descricao }}
             </p>
             <p v-if="jogo.desenvolvedor" class="mt-6 text-sm text-white">
-              <span class="text-muted">Desenvolvedor:</span>
+              <span class="text-muted">Desenvolvedor:&nbsp;</span>
               <NuxtLink :to="`/desenvolvedores/${slugDev}`" class="text-primary hover:underline">
                 {{ jogo.desenvolvedor }} (ver mais jogos)
               </NuxtLink>
@@ -206,10 +206,6 @@
               </p>
               <p class="mt-1 text-sm text-white">
                 Meta {{ formatarMoeda(jogo.metaValor) }}
-              </p>
-              <p class="mt-1 flex items-center gap-1 text-sm text-white">
-                Campanha flexível
-                <span class="text-muted" title="Info">?</span>
               </p>
               <NuxtLink
                 :to="`/contribuir?jogo=${id}`"
@@ -305,10 +301,13 @@ const id = computed(() => route.params.id as string)
 const { getComentarios, addComentario, getAvatarUrl } = useComentarios()
 const { getTotais: getReacoesTotais, getMinhaReacao, setReacao } = useComentarioReacoes()
 const { getExtra } = useContribuicoes()
+const { getPosts: getPostsDev } = usePostsDev()
+const { getJogoById } = useMeusJogos()
 
 const jogo = computed(() => {
   const item = jogos.find(j => j.id === id.value)
   const detalhes = getDetalhesJogo(id.value)
+  const meusJogosEntry = getJogoById(id.value)
   if (!item) {
     return {
       titulo: 'Jogo não encontrado',
@@ -327,17 +326,17 @@ const jogo = computed(() => {
   }
   return {
     titulo: item.title,
-    descricao: detalhes.descricao,
+    descricao: meusJogosEntry?.descricao ?? detalhes.descricao,
     tags: item.genero,
     desenvolvedor: item.desenvolvedor,
-    hero: item.thumb ?? '',
+    hero: meusJogosEntry?.thumb ?? item.thumb ?? '',
     valorArrecadado: detalhes.valorArrecadado,
     apoiadores: detalhes.apoiadores,
     dias: detalhes.dias,
     metaPercentual: item.metaPercentual,
     metaValor: detalhes.metaValor,
     fotos: detalhes.fotos,
-    atualizacoes: detalhes.atualizacoes
+    atualizacoes: [...getPostsDev(id.value), ...detalhes.atualizacoes]
   }
 })
 

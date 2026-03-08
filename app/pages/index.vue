@@ -113,11 +113,13 @@ definePageMeta({ layout: 'default' })
 
 const { destaqueHero, jogosDestaque, jogosSobrevivencia, jogosRpg } = useJogos()
 
+const { getPosts: getPostsDev } = usePostsDev()
 const ultimasPostagens = computed(() => {
   const list: { id: string; titulo: string; autor: string; descricao: string; thumb?: string; jogoId: string }[] = []
   for (const jogo of jogos) {
     const detalhes = getDetalhesJogo(jogo.id)
-    detalhes.atualizacoes.forEach((post, idx) => {
+    const todasAtualizacoes = [...getPostsDev(jogo.id), ...detalhes.atualizacoes]
+    todasAtualizacoes.forEach((post, idx) => {
       list.push({
         id: `${jogo.id}-${idx}`,
         titulo: post.titulo,
