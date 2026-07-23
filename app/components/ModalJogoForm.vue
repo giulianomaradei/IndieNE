@@ -210,7 +210,7 @@
                 </div>
               </div>
               <p class="mt-2 text-xs text-zinc-500">
-                Imagens são redimensionadas e salvas localmente (localStorage). Evite muitas fotos muito grandes.
+                URLs de imagens podem ser persistidas pela API. O upload de arquivos aguarda suporte adequado no backend.
               </p>
             </div>
           </div>
@@ -261,7 +261,7 @@ const generoTexto = ref('')
 const thumbInputRef = ref<HTMLInputElement | null>(null)
 const fotosInputRef = ref<HTMLInputElement | null>(null)
 
-/** Redimensiona e comprime imagem para caber no localStorage; retorna data URL */
+/** TODO(API): substituir Data URL por upload quando o backend aceitar arquivo ou armazenamento externo. */
 function readImageAsDataUrl (file: File, maxWidth = 1200, quality = 0.82): Promise<string> {
   return new Promise((resolve, reject) => {
     const img = new Image()

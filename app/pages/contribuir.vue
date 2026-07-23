@@ -174,8 +174,6 @@ import { jogos } from '~/data/jogos'
 
 type EstadoContribuicao = 'form' | 'processing' | 'success'
 
-const TEMPO_PROCESSAMENTO_MS = 3500
-
 const route = useRoute()
 const { addContribuicao } = useContribuicoes()
 const valoresPredefinidos = [25, 50, 100]
@@ -235,7 +233,7 @@ function validarCartao (): boolean {
   return true
 }
 
-function confirmar () {
+async function confirmar () {
   erro.value = ''
   const valor = valorFinal()
   if (valor <= 0) {
@@ -246,12 +244,15 @@ function confirmar () {
 
   loading.value = true
   estado.value = 'processing'
-  addContribuicao(jogoId.value, valor)
-  valorContribuido.value = valor
-
-  setTimeout(() => {
-    loading.value = false
+  try {
+    await addContribuicao(jogoId.value, valor)
+    valorContribuido.value = valor
     estado.value = 'success'
-  }, TEMPO_PROCESSAMENTO_MS)
+  } catch (e) {
+    estado.value = 'form'
+    erro.value = e instanceof Error ? e.message : 'Não foi possível registrar a contribuição.'
+  } finally {
+    loading.value = false
+  }
 }
 </script>

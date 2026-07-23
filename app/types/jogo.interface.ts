@@ -6,11 +6,20 @@ export interface ApiJogo {
   campanha?: number
   dataInicio?: string
   dataConclusao?: string
-  numJogadores?: number
-  genero?: string
+  avaliacao?: number
+  numJogadoresMin?: number
+  numJogadoresMax?: number
   controle?: boolean
   imgThumb?: string
   usuarioId: string
+  desenvolvedor?: string
+  generos: string[]
+  categorias: string[]
+  plataformas: string[]
+  totalArrecadado: number
+  apoiadores: number
+  metaPercentual: number
+  diasRestantes?: number
 }
 
 export interface JogoCreateRequest {
@@ -20,10 +29,14 @@ export interface JogoCreateRequest {
   campanha?: number | null
   dataInicio?: string | null
   dataConclusao?: string | null
-  numJogadores?: number | null
-  genero?: string | null
+  avaliacao?: number | null
+  numJogadoresMin?: number | null
+  numJogadoresMax?: number | null
   controle?: boolean | null
   imgThumb?: string | null
+  generos?: string[]
+  categorias?: string[]
+  plataformas?: string[]
 }
 
 export interface JogoUpdateRequest extends JogoCreateRequest {}

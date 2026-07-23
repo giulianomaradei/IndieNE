@@ -4,6 +4,8 @@ export interface ApiComentario {
   data: string
   postagemId: number
   usuarioId: string
+  likes: number
+  dislikes: number
 }
 
 export interface ComentarioCreateRequest {
