@@ -37,6 +37,7 @@ export function useApiClient (): HttpServiceClient {
   const session = useAuthSession()
 
   async function request<T> (path: string, options: ApiRequestOptions = {}): Promise<T> {
+    const tinhaSessao = Boolean(session.value?.token)
     const headers = new Headers(options.headers)
     if (session.value?.token) headers.set('Authorization', `Bearer ${session.value.token}`)
 
@@ -50,7 +51,10 @@ export function useApiClient (): HttpServiceClient {
       const fetchError = asFetchError(error)
       const status = fetchError.response?.status ?? fetchError.statusCode ?? fetchError.status
 
-      if (status === 401) session.value = null
+      if (status === 401 && tinhaSessao) {
+        session.value = null
+        if (import.meta.client) await navigateTo({ path: '/login', query: { motivo: 'sessao-expirada' } })
+      }
 
       const message = fetchError.data?.detail
         ?? fetchError.data?.message

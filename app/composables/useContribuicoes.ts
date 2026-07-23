@@ -29,7 +29,21 @@ export function useContribuicoes () {
       valorExtra: atual.valorExtra + valor,
       apoiadoresExtra: atual.apoiadoresExtra + 1
     }
-    await carregarResumo(jogoId)
+    const resumo = await carregarResumo(jogoId)
+    const catalogo = useState<import('~/types/jogo.interface').Jogo[]>('catalogo-publico-api')
+    const jogoPublico = catalogo.value?.find(jogo => jogo.id === jogoId)
+    if (jogoPublico) {
+      jogoPublico.valorArrecadado = resumo.totalArrecadado
+      jogoPublico.apoiadores = resumo.apoiadores
+      jogoPublico.metaPercentual = resumo.metaPercentual
+    }
+    const jogosDev = useState<import('~/types/jogo-dev.interface').JogoDev[]>('meus-jogos-api')
+    const jogoDev = jogosDev.value?.find(jogo => jogo.id === jogoId)
+    if (jogoDev) {
+      jogoDev.valorArrecadado = `R$ ${resumo.totalArrecadado}`
+      jogoDev.apoiadores = resumo.apoiadores
+      jogoDev.metaPercentual = resumo.metaPercentual
+    }
   }
 
   function getResumo (jogoId: string): CampanhaResumo | undefined {

@@ -46,6 +46,13 @@ function toRequest (jogo: Omit<JogoDev, 'id'> | JogoDev) {
   }
 }
 
+function validarImagens (imagens: string[]) {
+  const indiceDataUrl = imagens.findIndex(imagem => imagem.startsWith('data:'))
+  if (indiceDataUrl >= 0) {
+    throw new Error(`A imagem ${indiceDataUrl + 1} é um arquivo local. Use uma URL pública enquanto o upload não for suportado pela API.`)
+  }
+}
+
 export function useMeusJogos () {
   const meusJogos = useState<JogoDev[]>('meus-jogos-api', () => [])
   const loading = useState('meus-jogos-loading', () => false)
@@ -75,12 +82,25 @@ export function useMeusJogos () {
   }
 
   async function addJogo (payload: Omit<JogoDev, 'id'>) {
+    const imagensPayload = [payload.thumb, ...payload.fotos].filter((imagem): imagem is string => Boolean(imagem))
+    validarImagens(imagensPayload)
     const created = await jogoService.criar(toRequest(payload))
-    // TODO(API): uploads geram Data URLs maiores que o limite atual de 2.000 caracteres; integrar upload de arquivo/URL externa quando a API suportar.
-    const imagensPayload = [payload.thumb, ...payload.fotos]
-      .filter((imagem): imagem is string => Boolean(imagem) && imagem !== created.imgThumb)
-    await Promise.all(imagensPayload.map(imagem => imagemService.criar({ jogoId: created.id, imagem })))
-    const jogo = mapJogo(created, user.value?.nome || payload.desenvolvedor, imagensPayload)
+    const galeria = imagensPayload.filter(imagem => imagem !== created.imgThumb)
+    const criadas: number[] = []
+    try {
+      for (let indice = 0; indice < galeria.length; indice++) {
+        try {
+          criadas.push((await imagemService.criar({ jogoId: created.id, imagem: galeria[indice]! })).id)
+        } catch {
+          throw new Error(`O jogo não foi criado porque a imagem ${indice + 1} não pôde ser salva.`)
+        }
+      }
+    } catch (cause) {
+      await Promise.allSettled(criadas.map(id => imagemService.remover(id)))
+      await jogoService.remover(created.id).catch(() => undefined)
+      throw cause
+    }
+    const jogo = mapJogo(created, user.value?.nome || payload.desenvolvedor, galeria)
     meusJogos.value.push(jogo)
     return jogo
   }
@@ -88,14 +108,30 @@ export function useMeusJogos () {
   async function updateJogo (id: string, payload: Partial<JogoDev>) {
     const atual = meusJogos.value.find(jogo => jogo.id === id)
     if (!atual?.apiId) return
+    const dados = { ...atual, ...payload }
+    const imagensPayload = [dados.thumb, ...dados.fotos].filter((imagem): imagem is string => Boolean(imagem))
+    validarImagens(imagensPayload)
     const updated = await jogoService.atualizar(atual.apiId, toRequest({ ...atual, ...payload }))
     const imagensAtuais = await imagemService.listar({ jogoId: atual.apiId })
-    await Promise.all(imagensAtuais.map(imagem => imagemService.remover(imagem.id)))
-    const dados = { ...atual, ...payload }
-    const imagensPayload = [dados.thumb, ...dados.fotos]
-      .filter((imagem): imagem is string => Boolean(imagem) && imagem !== updated.imgThumb)
-    await Promise.all(imagensPayload.map(imagem => imagemService.criar({ jogoId: atual.apiId!, imagem })))
-    Object.assign(atual, mapJogo(updated, user.value?.nome || atual.desenvolvedor, imagensPayload))
+    const galeria = imagensPayload.filter(imagem => imagem !== updated.imgThumb)
+    const existentes = new Map(imagensAtuais.map(imagem => [imagem.imagem, imagem]))
+    const novas = galeria.filter(imagem => !existentes.has(imagem))
+    const obsoletas = imagensAtuais.filter(imagem => !galeria.includes(imagem.imagem))
+    const criadas: number[] = []
+    try {
+      for (const [indice, imagem] of novas.entries()) {
+        try {
+          criadas.push((await imagemService.criar({ jogoId: atual.apiId, imagem })).id)
+        } catch {
+          throw new Error(`Os dados do jogo foram atualizados, mas a nova imagem ${indice + 1} falhou. As imagens anteriores foram preservadas.`)
+        }
+      }
+      await Promise.all(obsoletas.map(imagem => imagemService.remover(imagem.id)))
+    } catch (cause) {
+      await Promise.allSettled(criadas.map(imagemId => imagemService.remover(imagemId)))
+      throw cause
+    }
+    Object.assign(atual, mapJogo(updated, user.value?.nome || atual.desenvolvedor, galeria))
   }
 
   async function removeJogo (id: string) {

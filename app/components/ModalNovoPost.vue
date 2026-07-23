@@ -9,7 +9,9 @@
       @click.self="emit('update:modelValue', false)"
     >
       <div
+        ref="dialogRef"
         class="w-full max-w-lg rounded-2xl border border-zinc-700 bg-zinc-900 shadow-xl"
+        tabindex="-1"
         @click.stop
       >
         <!-- Header estilo Twitter: título + X -->
@@ -37,6 +39,7 @@
           <input
             v-model="titulo"
             type="text"
+            aria-label="Título da publicação"
             placeholder="Título do post"
             class="mb-3 w-full rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-2 text-white placeholder:text-zinc-500 focus:border-primary focus:outline-none"
           >
@@ -44,9 +47,11 @@
             v-model="descricao"
             rows="4"
             placeholder="O que está acontecendo?"
+            aria-label="Descrição da publicação"
             class="w-full resize-none rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-3 text-white placeholder:text-zinc-500 focus:border-primary focus:outline-none"
           />
           <div class="mt-3">
+            <p class="mb-2 text-xs text-amber-300" role="note">Upload local aguarda suporte da API. Uma imagem selecionada não poderá ser publicada ainda.</p>
             <input
               ref="imagemInputRef"
               type="file"
@@ -110,6 +115,8 @@ const titulo = ref('')
 const descricao = ref('')
 const imagemDataUrl = ref('')
 const imagemInputRef = ref<HTMLInputElement | null>(null)
+const dialogRef = ref<HTMLElement | null>(null)
+useDialogFocus(toRef(props, 'modelValue'), dialogRef)
 
 const podePostar = computed(() =>
   !props.saving && (titulo.value.trim().length > 0 || descricao.value.trim().length > 0)

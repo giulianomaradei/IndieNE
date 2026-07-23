@@ -58,9 +58,10 @@ export function useJogos () {
   const porCategoria = (categoria: string, genero?: string) => computed(() => {
     const categorizados = allJogos.value.filter(jogo => jogo.categorias.includes(categoria))
     if (categorizados.length) return categorizados
-    return genero
+    const porGenero = genero
       ? allJogos.value.filter(jogo => jogo.genero.some(item => item.toLowerCase().includes(genero.toLowerCase())))
       : allJogos.value
+    return porGenero.length ? porGenero : allJogos.value
   })
 
   const toCarousel = (lista: ComputedRef<Jogo[]>) => computed(() => lista.value.map(jogo => ({

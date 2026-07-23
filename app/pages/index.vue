@@ -102,9 +102,9 @@
           >
             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
           </button>
+          <template v-for="(p, indice) in paginationPages" :key="`${p}-${indice}`">
           <button
-            v-for="p in paginationPages"
-            :key="p"
+            v-if="p !== -1"
             type="button"
             :class="[
               'flex h-9 min-w-9 items-center justify-center rounded px-2 text-sm font-medium transition',
@@ -114,8 +114,10 @@
             ]"
             @click="paginaAtual = p"
           >
-            {{ p === -1 ? '…' : p }}
+            {{ p }}
           </button>
+          <span v-else class="flex h-9 items-center px-1 text-zinc-500" aria-hidden="true">…</span>
+          </template>
           <button
             type="button"
             class="flex h-9 w-9 items-center justify-center rounded text-zinc-400 hover:bg-zinc-800 hover:text-white"

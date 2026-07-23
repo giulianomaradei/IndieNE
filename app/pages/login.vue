@@ -38,6 +38,9 @@
           <p v-if="erro" class="text-sm text-red-400">
             {{ erro }}
           </p>
+          <p v-if="avisoSessao" class="rounded-lg border border-amber-700/60 bg-amber-950/30 p-3 text-sm text-amber-200" role="status">
+            {{ avisoSessao }}
+          </p>
 
           <button
             type="submit"
@@ -65,6 +68,8 @@ const email = ref('')
 const senha = ref('')
 const erro = ref('')
 const loading = ref(false)
+const route = useRoute()
+const avisoSessao = computed(() => route.query.motivo === 'sessao-expirada' ? 'Sua sessão expirou. Entre novamente para continuar.' : '')
 
 if (isLoggedIn.value) await navigateTo('/area-dev')
 
@@ -73,7 +78,12 @@ async function onSubmit () {
   loading.value = true
   try {
     const resultado = await login(email.value, senha.value)
-    if (resultado.ok) await navigateTo('/area-dev')
+    if (resultado.ok) {
+      const destino = typeof route.query.redirecionar === 'string' && route.query.redirecionar.startsWith('/')
+        ? route.query.redirecionar
+        : '/area-dev'
+      await navigateTo(destino)
+    }
     else erro.value = resultado.erro ?? 'Erro ao entrar.'
   } finally {
     loading.value = false
