@@ -225,9 +225,10 @@
             </button>
             <button
               type="submit"
-              class="rounded-lg bg-primary px-6 py-2 text-sm font-bold text-dark transition hover:bg-primary/90"
+              :disabled="saving"
+              class="rounded-lg bg-primary px-6 py-2 text-sm font-bold text-dark transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {{ isEdit ? 'Salvar' : 'Criar jogo' }}
+              {{ saving ? 'Salvando...' : isEdit ? 'Salvar' : 'Criar jogo' }}
             </button>
           </div>
         </form>
@@ -245,8 +246,9 @@ const props = withDefaults(
     modelValue: boolean
     jogo: JogoDev | null
     nomeEstudio?: string
+    saving?: boolean
   }>(),
-  { nomeEstudio: '' }
+  { nomeEstudio: '', saving: false }
 )
 
 const emit = defineEmits<{
@@ -424,6 +426,5 @@ function onSubmit () {
   } else {
     emit('save', payload)
   }
-  emit('update:modelValue', false)
 }
 </script>

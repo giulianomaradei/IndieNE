@@ -17,6 +17,11 @@
           <p v-if="jogoTitulo" class="mt-2 text-lg text-primary">
             {{ jogoTitulo }}
           </p>
+          <p v-if="carregandoJogo" class="mt-2 text-sm text-zinc-400" role="status">Carregando jogo...</p>
+          <div v-else-if="erroJogo" class="mt-4 rounded-lg border border-red-900/60 p-4">
+            <p class="text-sm text-red-400">{{ erroJogo }}</p>
+            <button type="button" class="mt-3 text-sm font-medium text-primary hover:underline" @click="carregarJogo">Tentar novamente</button>
+          </div>
           <p v-else class="mt-2 text-sm text-zinc-500">
             Nenhum jogo selecionado. Volte à página do jogo e clique em Contribuir.
           </p>
@@ -58,6 +63,9 @@
             </div>
 
             <div class="mt-8 border-t border-zinc-700 pt-8">
+              <div class="mb-6 rounded-lg border border-amber-700/60 bg-amber-950/30 p-4 text-sm text-amber-200" role="note">
+                Demonstração acadêmica: nenhum pagamento será processado. Os dados do cartão não são enviados nem armazenados.
+              </div>
               <p class="text-sm font-medium text-white">
                 Dados do cartão
               </p>
@@ -168,9 +176,7 @@
 </template>
 
 <script setup lang="ts">
-// TODO(API): buscar o jogo selecionado pelo ID na API em vez de consultar o catálogo local.
-
-import { jogos } from '~/data/jogos'
+import { useJogoService } from '~/services/jogo.service'
 
 type EstadoContribuicao = 'form' | 'processing' | 'success'
 
@@ -180,7 +186,10 @@ const valoresPredefinidos = [25, 50, 100]
 const valorSelecionado = ref<number | null>(50)
 const valorCustom = ref<number | ''>('')
 const jogoId = computed(() => (route.query.jogo as string) || '')
-const jogoTitulo = computed(() => jogos.find(jogo => jogo.id === jogoId.value)?.title ?? '')
+const jogoTitulo = ref('')
+const carregandoJogo = ref(false)
+const erroJogo = ref('')
+const jogoService = useJogoService()
 const cartao = ref({ numero: '', nome: '', validade: '', cvv: '' })
 const erro = ref('')
 const loading = ref(false)
@@ -190,10 +199,25 @@ const valorContribuidoFormatado = computed(() =>
   valorContribuido.value > 0 ? `R$ ${valorContribuido.value.toLocaleString('pt-BR')}` : ''
 )
 
+async function carregarJogo () {
+  if (!jogoId.value || !Number.isInteger(Number(jogoId.value))) return
+  carregandoJogo.value = true
+  erroJogo.value = ''
+  try {
+    jogoTitulo.value = (await jogoService.buscar(Number(jogoId.value))).titulo
+  } catch (cause) {
+    erroJogo.value = cause instanceof Error ? cause.message : 'Não foi possível carregar o jogo.'
+  } finally {
+    carregandoJogo.value = false
+  }
+}
+
 function selecionarValor (valor: number) {
   valorSelecionado.value = valor
   valorCustom.value = ''
 }
+
+await carregarJogo()
 
 function formatarNumeroCartao () {
   const numero = cartao.value.numero.replace(/\D/g, '').slice(0, 16)

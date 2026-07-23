@@ -43,7 +43,9 @@ export interface JogoUpdateRequest extends JogoCreateRequest {}
 
 export interface Jogo {
   id: string
+  apiId: number
   title: string
+  descricao: string
   thumb?: string
   genero: string[]
   desenvolvedor: string
@@ -55,4 +57,8 @@ export interface Jogo {
   compatControle: boolean
   so: string[]
   categorias: string[]
+  valorArrecadado: number
+  apoiadores: number
+  metaValor: number
+  dias: number
 }

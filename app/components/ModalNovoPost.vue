@@ -84,7 +84,7 @@
               :disabled="!podePostar"
               class="rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-dark transition disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/90"
             >
-              Postar
+              {{ saving ? 'Publicando...' : 'Postar' }}
             </button>
           </div>
         </form>
@@ -98,6 +98,7 @@ const props = defineProps<{
   modelValue: boolean
   jogoId: string
   jogoTitle?: string
+  saving?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -111,7 +112,7 @@ const imagemDataUrl = ref('')
 const imagemInputRef = ref<HTMLInputElement | null>(null)
 
 const podePostar = computed(() =>
-  (titulo.value.trim().length > 0 || descricao.value.trim().length > 0)
+  !props.saving && (titulo.value.trim().length > 0 || descricao.value.trim().length > 0)
 )
 
 watch(
@@ -190,6 +191,5 @@ function onSubmit () {
     imagem: imagemDataUrl.value || undefined
   }
   emit('post', payload)
-  emit('update:modelValue', false)
 }
 </script>

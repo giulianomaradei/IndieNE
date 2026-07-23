@@ -18,6 +18,8 @@ export interface ComentarioUpdateRequest {
 }
 
 export interface Comentario {
+  id: number
+  usuarioId: string
   usuario: string
   texto: string
   avatar: string

@@ -105,6 +105,16 @@
         </aside>
 
         <div class="min-w-0 flex-1">
+          <div v-if="loading" class="rounded-xl border border-zinc-700 px-6 py-16 text-center text-zinc-400" role="status">
+            Carregando jogos...
+          </div>
+          <div v-else-if="error" class="rounded-xl border border-red-900/60 px-6 py-12 text-center">
+            <p class="text-red-400">{{ error }}</p>
+            <button type="button" class="mt-5 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-dark" @click="refresh(true)">
+              Tentar novamente
+            </button>
+          </div>
+          <template v-else>
           <p class="mb-4 text-sm text-muted">
             {{ jogosFiltrados.length }} jogo(s) encontrado(s)
           </p>
@@ -172,6 +182,10 @@
               </svg>
             </button>
           </div>
+          <p v-if="!jogosFiltrados.length" class="rounded-xl border border-dashed border-zinc-700 py-12 text-center text-zinc-500">
+            Nenhum jogo corresponde aos filtros selecionados.
+          </p>
+          </template>
         </div>
       </div>
     </div>
@@ -244,7 +258,7 @@ function toggleFiltro (id: string) {
   filtroAberto.value = filtroAberto.value === id ? null : id
 }
 
-const { jogosFiltrados, opcoesFiltros } = useJogosFiltrados({
+const { jogosFiltrados, opcoesFiltros, loading, error, refresh } = useJogosFiltrados({
   busca,
   generos: toRef(filtros, 'generos'),
   desenvolvedor: toRef(filtros, 'desenvolvedor'),
@@ -260,4 +274,6 @@ const {
   paginationPages,
   itensExibidos: jogosExibidos
 } = usePagination(jogosFiltrados, ITENS_POR_PAGINA)
+
+await refresh()
 </script>

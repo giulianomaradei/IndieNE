@@ -54,6 +54,12 @@
                 </button>
               </div>
               <ul class="mt-4 flex flex-col gap-2">
+                <li v-if="loading" class="py-5 text-center text-sm text-zinc-400" role="status">Carregando jogos...</li>
+                <li v-else-if="error" class="py-4 text-center">
+                  <p class="text-sm text-red-400">{{ error }}</p>
+                  <button type="button" class="mt-3 text-sm text-primary hover:underline" @click="refreshJogos">Tentar novamente</button>
+                </li>
+                <li v-else-if="!meusJogos.length" class="py-5 text-center text-sm text-zinc-500">Você ainda não cadastrou jogos.</li>
                 <li
                   v-for="item in meusJogos"
                   :key="item.id"
@@ -90,6 +96,9 @@
 
         <!-- Coluna direita: jogo selecionado (dashboard) + crowdfunding + posts -->
         <div class="min-w-0 flex-1">
+          <p v-if="operacaoErro" class="mb-5 rounded-lg border border-red-900/60 bg-red-950/20 p-4 text-sm text-red-400" role="alert">
+            {{ operacaoErro }}
+          </p>
           <template v-if="jogoAtual">
             <!-- Card do jogo selecionado -->
             <div class="rounded-xl border border-primary/50 bg-zinc-900/50 overflow-hidden">
@@ -193,6 +202,7 @@
             v-model="modalAberto"
             :jogo="jogoParaEditar"
             nome-estudio="Supergiant Games"
+            :saving="salvandoJogo"
             @save="onSalvarJogo"
           />
 
@@ -200,6 +210,7 @@
             v-model="modalNovoPostAberto"
             :jogo-id="jogoSelecionado"
             :jogo-title="jogoAtual?.title"
+            :saving="salvandoPost"
             @post="onNovoPost"
           />
 
@@ -322,11 +333,7 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'default', middleware: 'auth' })
 
-// TODO(API): substituir campanha e atualizações de app/data/jogo-detalhes.ts por dados do backend.
-
 import type { JogoDev } from '~/types/jogo-dev.interface'
-import { getDetalhesJogo } from '~/data/jogo-detalhes'
-import { getBaseCampanha } from '~/utils/campanha'
 import { formatarMoeda, parseMetaValor } from '~/utils/moeda'
 
 interface FotoPost {
@@ -334,14 +341,16 @@ interface FotoPost {
   titulo: string
 }
 
-const { meusJogos, refresh: refreshJogos, addJogo, updateJogo, getJogoById } = useMeusJogos()
-const { getExtra } = useContribuicoes()
+const { meusJogos, loading, error, refresh: refreshJogos, addJogo, updateJogo, getJogoById } = useMeusJogos()
 const { getPosts: getPostsDev, refresh: refreshPosts, addPost: addPostDev } = usePostsDev()
 const { getAvatarUrl } = useComentarios()
 const jogoSelecionado = ref('')
 const modalAberto = ref(false)
 const modalNovoPostAberto = ref(false)
 const jogoParaEditar = ref<JogoDev | null>(null)
+const salvandoJogo = ref(false)
+const salvandoPost = ref(false)
+const operacaoErro = ref('')
 
 watch(meusJogos, (lista) => {
   if (!jogoSelecionado.value && lista[0]) jogoSelecionado.value = lista[0].id
@@ -353,21 +362,11 @@ watch(jogoSelecionado, (id) => {
 const jogoAtual = computed(() =>
   jogoSelecionado.value ? getJogoById(jogoSelecionado.value) : undefined
 )
-const baseCampanha = computed(() =>
-  jogoSelecionado.value
-    ? getBaseCampanha(jogoSelecionado.value)
-    : { valorNumerico: 0, apoiadores: 0, metaNumerico: 0 }
-)
-const contribuicoesJogo = computed(() =>
-  jogoSelecionado.value
-    ? getExtra(jogoSelecionado.value)
-    : { valorExtra: 0, apoiadoresExtra: 0 }
-)
-const totalValorDisplay = computed(() => baseCampanha.value.valorNumerico + contribuicoesJogo.value.valorExtra)
+const totalValorDisplay = computed(() => parseMetaValor(jogoAtual.value?.valorArrecadado))
 const valorArrecadadoDisplay = computed(() => formatarMoeda(totalValorDisplay.value))
-const totalApoiadoresDisplay = computed(() => baseCampanha.value.apoiadores + contribuicoesJogo.value.apoiadoresExtra)
+const totalApoiadoresDisplay = computed(() => jogoAtual.value?.apoiadores ?? 0)
 const metaNumericoDisplay = computed(() =>
-  baseCampanha.value.metaNumerico || parseMetaValor(jogoAtual.value?.metaValor)
+  parseMetaValor(jogoAtual.value?.metaValor)
 )
 const metaFormatada = computed(() =>
   metaNumericoDisplay.value > 0 ? formatarMoeda(metaNumericoDisplay.value) : (jogoAtual.value?.metaValor || '—')
@@ -377,10 +376,7 @@ const percentualMetaDisplay = computed(() =>
     ? 0
     : Math.min(100, Math.round((totalValorDisplay.value / metaNumericoDisplay.value) * 100))
 )
-const posts = computed(() => [
-  ...getPostsDev(jogoSelecionado.value),
-  ...getDetalhesJogo(jogoSelecionado.value).atualizacoes
-])
+const posts = computed(() => getPostsDev(jogoSelecionado.value))
 const fotosDosPosts = computed<FotoPost[]>(() =>
   posts.value.flatMap(post => post.imagem ? [{ src: post.imagem, titulo: post.titulo }] : [])
 )
@@ -401,8 +397,17 @@ function abrirModalEditar (jogo: JogoDev) {
 }
 
 async function onSalvarJogo (payload: JogoDev | Omit<JogoDev, 'id'>) {
-  if ('id' in payload && payload.id) await updateJogo(payload.id, payload)
-  else jogoSelecionado.value = (await addJogo(payload)).id
+  salvandoJogo.value = true
+  operacaoErro.value = ''
+  try {
+    if ('id' in payload && payload.id) await updateJogo(payload.id, payload)
+    else jogoSelecionado.value = (await addJogo(payload)).id
+    modalAberto.value = false
+  } catch (cause) {
+    operacaoErro.value = cause instanceof Error ? cause.message : 'Não foi possível salvar o jogo.'
+  } finally {
+    salvandoJogo.value = false
+  }
 }
 
 function formatarDataAgora () {
@@ -412,7 +417,16 @@ function formatarDataAgora () {
 
 async function onNovoPost (payload: { titulo: string, descricao: string, imagem?: string }) {
   if (!jogoSelecionado.value) return
-  await addPostDev(jogoSelecionado.value, { ...payload, data: formatarDataAgora() })
+  salvandoPost.value = true
+  operacaoErro.value = ''
+  try {
+    await addPostDev(jogoSelecionado.value, { ...payload, data: formatarDataAgora() })
+    modalNovoPostAberto.value = false
+  } catch (cause) {
+    operacaoErro.value = cause instanceof Error ? cause.message : 'Não foi possível publicar a atualização.'
+  } finally {
+    salvandoPost.value = false
+  }
 }
 
 await refreshJogos()
