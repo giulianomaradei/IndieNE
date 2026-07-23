@@ -344,7 +344,7 @@
 </template>
 
 <script setup lang="ts">
-definePageMeta({ layout: 'default', middleware: 'auth' })
+definePageMeta({ layout: 'default', middleware: ['auth', 'developer'] })
 
 import type { JogoDev } from '~/types/jogo-dev.interface'
 import { formatarMoeda, parseMetaValor } from '~/utils/moeda'

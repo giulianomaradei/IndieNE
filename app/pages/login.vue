@@ -6,7 +6,7 @@
           Entrar
         </h1>
         <p class="mt-2 text-sm text-muted">
-          Use seu e-mail e senha para acessar a Área DEV.
+          Use seu e-mail e senha para acessar sua conta.
         </p>
 
         <form class="mt-8 space-y-6" @submit.prevent="onSubmit">
@@ -63,7 +63,7 @@
 </template>
 
 <script setup lang="ts">
-const { login, isLoggedIn } = useAuth()
+const { login, isLoggedIn, isDeveloper } = useAuth()
 const email = ref('')
 const senha = ref('')
 const erro = ref('')
@@ -71,7 +71,7 @@ const loading = ref(false)
 const route = useRoute()
 const avisoSessao = computed(() => route.query.motivo === 'sessao-expirada' ? 'Sua sessão expirou. Entre novamente para continuar.' : '')
 
-if (isLoggedIn.value) await navigateTo('/area-dev')
+if (isLoggedIn.value) await navigateTo(isDeveloper.value ? '/area-dev' : '/perfil')
 
 async function onSubmit () {
   erro.value = ''
@@ -79,9 +79,12 @@ async function onSubmit () {
   try {
     const resultado = await login(email.value, senha.value)
     if (resultado.ok) {
-      const destino = typeof route.query.redirecionar === 'string' && route.query.redirecionar.startsWith('/')
+      const destinoSolicitado = typeof route.query.redirecionar === 'string' && route.query.redirecionar.startsWith('/')
         ? route.query.redirecionar
-        : '/area-dev'
+        : null
+      const destino = destinoSolicitado === '/area-dev' && !isDeveloper.value
+        ? '/perfil'
+        : destinoSolicitado ?? (isDeveloper.value ? '/area-dev' : '/perfil')
       await navigateTo(destino)
     }
     else erro.value = resultado.erro ?? 'Erro ao entrar.'

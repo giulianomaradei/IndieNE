@@ -194,6 +194,27 @@
             </div>
             <div class="sm:col-span-2">
               <label class="block text-sm font-medium text-white">Fotos (upload ou URL)</label>
+              <div class="mt-2 flex flex-col gap-2 sm:flex-row">
+                <input
+                  id="jogo-foto-url"
+                  v-model="fotoUrl"
+                  type="url"
+                  class="min-w-0 flex-1 rounded-lg border border-zinc-700 bg-surface px-4 py-2 text-sm text-white focus:border-primary focus:outline-none"
+                  placeholder="https://exemplo.com/imagem.jpg"
+                  aria-describedby="jogo-foto-url-ajuda jogo-foto-url-erro"
+                  @keydown.enter.prevent="adicionarFotoUrl"
+                >
+                <button
+                  type="button"
+                  class="rounded-lg border border-primary px-4 py-2 text-sm font-medium text-primary transition hover:bg-primary/10"
+                  @click="adicionarFotoUrl"
+                >
+                  Adicionar URL
+                </button>
+              </div>
+              <p v-if="fotoUrlErro" id="jogo-foto-url-erro" class="mt-1 text-sm text-red-400" role="alert">
+                {{ fotoUrlErro }}
+              </p>
               <input
                 ref="fotosInputRef"
                 type="file"
@@ -202,13 +223,15 @@
                 class="hidden"
                 @change="onFotosChange"
               >
-              <div class="mt-2 flex flex-wrap items-center gap-2">
+              <div class="mt-3 flex flex-wrap items-center gap-2">
                 <button
                   type="button"
-                  class="flex h-20 w-20 shrink-0 items-center justify-center rounded-lg border border-dashed border-zinc-600 text-zinc-500 transition hover:border-primary hover:text-primary"
+                  class="flex h-20 w-20 shrink-0 flex-col items-center justify-center rounded-lg border border-dashed border-zinc-600 text-zinc-500 transition hover:border-primary hover:text-primary"
+                  aria-label="Selecionar fotos locais para prévia"
                   @click="fotosInputRef?.click()"
                 >
                   <span class="text-2xl">+</span>
+                  <span class="text-[10px]">Prévia local</span>
                 </button>
                 <div
                   v-for="(src, i) in form.fotos"
@@ -230,7 +253,7 @@
                   </button>
                 </div>
               </div>
-              <p class="mt-2 text-xs text-zinc-500">
+              <p id="jogo-foto-url-ajuda" class="mt-2 text-xs text-zinc-500">
                 Use URLs públicas. O upload de arquivos é apenas uma prévia e não pode ser salvo até a API oferecer upload próprio.
               </p>
             </div>
@@ -289,6 +312,8 @@ const categoriasDisponiveis = [
 ]
 const thumbInputRef = ref<HTMLInputElement | null>(null)
 const fotosInputRef = ref<HTMLInputElement | null>(null)
+const fotoUrl = ref('')
+const fotoUrlErro = ref('')
 const dialogRef = ref<HTMLElement | null>(null)
 useDialogFocus(toRef(props, 'modelValue'), dialogRef)
 
@@ -373,6 +398,32 @@ function removerFoto (index: number) {
   form.fotos.splice(index, 1)
 }
 
+function adicionarFotoUrl () {
+  const valor = fotoUrl.value.trim()
+  fotoUrlErro.value = ''
+
+  if (!valor) {
+    fotoUrlErro.value = 'Informe uma URL pública.'
+    return
+  }
+
+  try {
+    const url = new URL(valor)
+    if (!['http:', 'https:'].includes(url.protocol)) throw new Error('Protocolo inválido')
+  } catch {
+    fotoUrlErro.value = 'Informe uma URL válida iniciada por http:// ou https://.'
+    return
+  }
+
+  if (form.fotos.includes(valor)) {
+    fotoUrlErro.value = 'Esta foto já foi adicionada.'
+    return
+  }
+
+  form.fotos.push(valor)
+  fotoUrl.value = ''
+}
+
 const form = reactive({
   title: '',
   descricao: '',
@@ -397,6 +448,8 @@ watch(
   () => [props.jogo, props.modelValue] as const,
   ([jogo, open]) => {
     if (!open) return
+    fotoUrl.value = ''
+    fotoUrlErro.value = ''
     if (jogo) {
       form.title = jogo.title
       form.descricao = jogo.descricao

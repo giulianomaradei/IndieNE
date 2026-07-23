@@ -33,6 +33,7 @@
         <div class="flex items-center gap-3">
           <template v-if="isLoggedIn">
             <NuxtLink
+              v-if="isDeveloper"
               to="/area-dev"
               class="hidden rounded-lg px-5 py-2.5 text-sm font-normal transition md:inline-flex"
               :class="$route.path === '/area-dev' ? 'bg-primary text-dark hover:bg-primary/90' : 'border border-primary bg-transparent text-primary hover:bg-primary/10'"
@@ -96,7 +97,7 @@
 </template>
 
 <script setup lang="ts">
-const { isLoggedIn } = useAuth()
+const { isLoggedIn, isDeveloper } = useAuth()
 const route = useRoute()
 const menuAberto = ref(false)
 const links = computed(() => [
@@ -104,7 +105,10 @@ const links = computed(() => [
   { to: '/explorar', label: 'Explorar' },
   { to: '/como-funciona', label: 'Como funciona' },
   ...(isLoggedIn.value
-    ? [{ to: '/area-dev', label: 'Área DEV' }, { to: '/perfil', label: 'Meu perfil' }]
+    ? [
+        ...(isDeveloper.value ? [{ to: '/area-dev', label: 'Área DEV' }] : []),
+        { to: '/perfil', label: 'Meu perfil' }
+      ]
     : [{ to: '/login', label: 'Login / Cadastro' }])
 ])
 watch(() => route.fullPath, () => { menuAberto.value = false })
